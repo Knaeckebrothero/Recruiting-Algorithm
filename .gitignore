@@ -6,6 +6,7 @@
 
 # Yaml
 #*.yaml
+compose.yaml
 
 # SQLite database files
 *.db
