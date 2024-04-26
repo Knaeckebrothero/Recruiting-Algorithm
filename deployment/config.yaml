@@ -1,0 +1,73 @@
+variant: fcos
+version: 1.4.0
+passwd:
+  users:
+    - name: core
+      ssh_authorized_keys:
+        - ssh-ed25519 KEY
+systemd:
+  units:
+    - name: auto-reboot.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Daily Reboot
+
+        [Service]
+        Type=oneshot
+        ExecStart=/usr/bin/systemctl reboot
+
+        [Install]
+        WantedBy=multi-user.target
+    - name: auto-reboot.timer
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Daily Reboot Timer
+
+        [Timer]
+        OnCalendar=*-*-* 00:00:00
+        Persistent=true
+
+        [Install]
+        WantedBy=timers.target
+    - name: kubernetes.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Start Kubernetes
+        After=network.target
+
+        [Service]
+        Type=simple
+        ExecStart=/usr/local/bin/kubectl apply -f /etc/kubernetes/manifests/
+        Restart=on-failure
+
+        [Install]
+        WantedBy=multi-user.target
+    - name: zincati.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Automatic update service for Fedora CoreOS
+
+        [Service]
+        ExecStart=/usr/libexec/zincati agent -v
+        Restart=on-failure
+
+        [Install]
+        WantedBy=multi-user.target
+storage:
+  disks:
+    - device: /dev/sda4
+      wipeTable: true
+      partitions:
+        - label: data
+          sizeMiB: 0
+          grow: true
+  filesystems:
+    - path: /var/data
+      device: "/dev/disk/by-partlabel/data"
+      format: xfs
+      wipeFilesystem: true
+      label: "data"
