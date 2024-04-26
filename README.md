@@ -1,15 +1,15 @@
-# Project Title
+# Trost: Projekt - SoSe2024
 
-One Paragraph of project description goes here. Explain what the project is about, what it does, and the value it provides to users.
+API's
+https://docs.google.com/spreadsheets/d/1itYdtVbfjQgLpScrXZugvm9qUZenOuqP/edit?usp=sharing&ouid=112245649497495850593&rtpof=true&sd=true
+
 
 ## Table of Contents
 
 - [Installation](#installation)
 - [Usage](#usage)
-- [Contributing](#contributing)
 - [License](#license)
 - [Contact](#contact)
-- [Acknowledgements](#acknowledgements)
 
 ## Installation
 
@@ -19,6 +19,13 @@ Describe the installation process here. Include any pre-requisites, required lib
 # Example command line instructions
 pip install -r requirements.txt
 ```
+
+## Usage
+1. Clone repo
+2. Install docker
+3. Start docker
+4. Run backend
+5. Spring autocreates dbcontainers and connects them to the backend for testing
 
 ## License
 
