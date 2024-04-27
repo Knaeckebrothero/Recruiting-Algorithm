@@ -3,6 +3,8 @@
 API's
 https://docs.google.com/spreadsheets/d/1itYdtVbfjQgLpScrXZugvm9qUZenOuqP/edit?usp=sharing&ouid=112245649497495850593&rtpof=true&sd=true
 
+Frontend Page
+https://university-projekt.vercel.app/
 
 ## Table of Contents
 
