@@ -5,7 +5,8 @@
 .env
 
 # Yaml
-*.yaml
+#*.yaml
+compose.yaml
 
 # SQLite database files
 *.db
