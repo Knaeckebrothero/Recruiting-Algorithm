@@ -18,17 +18,27 @@ spec:
         name: mysql
         env:
         - name: MYSQL_ROOT_PASSWORD
-          value: "yourpassword"
+          value: "PASSWORD_GOES_HERE"
         ports:
         - containerPort: 3306
           name: mysql
+        args:
+          - "--ssl-ca=/mysql-certs/ca.pem"
+          - "--ssl-cert=/mysql-certs/server-cert.pem"
+          - "--ssl-key=/mysql-certs/server-key.pem"
         volumeMounts:
-        - name: mysql-storage
+        - name: mysql-data
           mountPath: /var/lib/mysql
+        - name: cert-volume
+          mountPath: /mysql-certs
+          readOnly: true
       volumes:
-      - name: mysql-storage
+      - name: mysql-data
         persistentVolumeClaim:
-          claimName: mysql-pvc
+          claimName: pvc-mysql
+      - name: cert-volume
+        secret:
+          secretName: mysql-certs
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -52,9 +62,9 @@ spec:
         - containerPort: 27017
           name: mongo
         volumeMounts:
-        - name: mongo-storage
+        - name: mongo-data
           mountPath: /data/db
       volumes:
-      - name: mongo-storage
+      - name: mongo-data
         persistentVolumeClaim:
-          claimName: mongodb-pvc
+          claimName: pvc-mongodb
