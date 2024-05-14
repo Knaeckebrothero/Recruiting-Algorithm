@@ -1,6 +1,7 @@
 package fra.uas.intellimatch.intellimatch.controller;
 
 import fra.uas.intellimatch.intellimatch.dto.AuthRequestDto;
+import fra.uas.intellimatch.intellimatch.dto.RegistrationRequestDto;
 import fra.uas.intellimatch.intellimatch.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +28,11 @@ public class AuthController {
         log.info("AuthResource.authRequest end {}", userRegistrationResponse);
         return new ResponseEntity<>(userRegistrationResponse, HttpStatus.OK);
     }
-
-
+    @PostMapping("/register")
+    public ResponseEntity<Map<String, String>> registerUser(@RequestBody RegistrationRequestDto registrationRequestDto) {
+        log.info("Registration attempt for username: {}", registrationRequestDto.username());
+        var registrationResponse = authService.registerUser(registrationRequestDto);
+        log.info("Registration completed for username: {}", registrationRequestDto.username());
+        return new ResponseEntity<>(registrationResponse, HttpStatus.CREATED);
+    }
 }
