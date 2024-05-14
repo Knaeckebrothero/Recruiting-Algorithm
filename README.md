@@ -1,11 +1,5 @@
 # Trost: Projekt - SoSe2024
 
-API's
-https://docs.google.com/spreadsheets/d/1itYdtVbfjQgLpScrXZugvm9qUZenOuqP/edit?usp=sharing&ouid=112245649497495850593&rtpof=true&sd=true
-
-Frontend Page
-https://university-projekt.vercel.app/
-
 ## Table of Contents
 
 - [Installation](#installation)
@@ -15,14 +9,39 @@ https://university-projekt.vercel.app/
 
 ## Installation
 
-Describe the installation process here. Include any pre-requisites, required libraries, and how to get the development environment running.
-
-```bash
-# Example command line instructions
-pip install -r requirements.txt
-```
-
 ## Usage
+
+### References
+
+- [API](https://docs.google.com/spreadsheets/d/1itYdtVbfjQgLpScrXZugvm9qUZenOuqP/edit?usp=sharing&ouid=112245649497495850593&rtpof=true&sd=true)
+- [Frontend](https://university-projekt.vercel.app/)
+- [Server](109.91.181.97)
+
+### Data warehouse
+
+#### Get a Compatible SQL Client
+You can download MySQL Workbench here:<br>
+[https://dev.mysql.com/downloads/workbench/](https://dev.mysql.com/downloads/workbench/)
+
+#### Setup the Connection to the DWH
+You can use the following credentials to connect to the DWH:
+- Connection Method: TCP/IP
+- Hostname: [IP](109.91.181.97)
+- Port: 31749
+- Username: root
+- Password: [Password](4fAXg!jq@2&8B986hAU@J#T)
+
+#### Setup SSL to Encrypt Traffic Between You and the Database
+1. Set "Use SSL" to "Require and Verify CA".
+2. Save the files from the repository deployment/encryption/ssl/ and specify them as follows:
+    - SSL Key: client-key.pem
+    - SSL CERT: client-cert.pem
+    - SSL CA: ca.pem
+
+#### Test the Connection and Close the Window
+**Note:** You may generate your own certificate if desired. If you wish to do so, please reach out to me to get it signed.
+
+### Backend (development)
 1. Clone repo
 2. Install docker
 3. Start docker
