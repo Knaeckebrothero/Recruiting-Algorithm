@@ -3,6 +3,7 @@ kind: Deployment
 metadata:
   name: mysql
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app: mysql
@@ -14,8 +15,15 @@ spec:
         app: mysql
     spec:
       containers:
-      - image: mysql:latest
-        name: mysql
+      - name: mysql
+        image: mysql:5.7
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "500m"
+          limits:
+            memory: "4Gi"
+            cpu: "1000m"
         env:
         - name: MYSQL_ROOT_PASSWORD
           value: "DB_ROOT_PASSWORD_GOES_IN_HERE"
@@ -23,6 +31,7 @@ spec:
         - containerPort: 3306
           name: mysql
         args:
+          - "--innodb-buffer-pool-size=3G"
           - "--ssl-ca=/mysql-certs/ca.pem"
           - "--ssl-cert=/mysql-certs/server-cert.pem"
           - "--ssl-key=/mysql-certs/server-key.pem"
@@ -39,32 +48,3 @@ spec:
       - name: cert-volume
         secret:
           secretName: mysql-certs
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: mongodb
-spec:
-  selector:
-    matchLabels:
-      app: mongodb
-  strategy:
-    type: Recreate
-  template:
-    metadata:
-      labels:
-        app: mongodb
-    spec:
-      containers:
-      - image: mongo:latest
-        name: mongo
-        ports:
-        - containerPort: 27017
-          name: mongo
-        volumeMounts:
-        - name: mongo-data
-          mountPath: /data/db
-      volumes:
-      - name: mongo-data
-        persistentVolumeClaim:
-          claimName: pvc-mongodb

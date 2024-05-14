@@ -62,7 +62,7 @@ systemd:
 
         [Service]
         Type=simple
-        ExecStart=/usr/local/bin/k3s server --data-dir /var/data/k3s
+        ExecStart=/usr/local/bin/k3s server --data-dir /var/k3s
         Restart=on-failure
         RestartSec=5s
 
@@ -78,30 +78,43 @@ systemd:
 
         [Service]
         Type=oneshot
-        ExecStart=/usr/bin/cp -a /var/data/k3s /var/storage/backup/k3s
+        # ExecStart=/usr/bin/cp -a /var/k3s /var/storage/backup/k3s
+        # ExecStart=/usr/bin/cp -a /var/volumes /var/storage/backup/volumes
+        ExecStart=/bin/sh -c '/usr/bin/cp -a /var/k3s /var/storage/backup/k3s && /usr/bin/cp -a /var/volumes /var/storage/backup/volumes'
 
         [Install]
         WantedBy=multi-user.target
 storage:
   disks:
-  - device: /dev/disk/by-id/coreos-boot-disk
+  - device: /dev/disk/by-id/coreos-boot-disk # Root m2 reserved for OS and Kubernetes
     wipe_table: false
     partitions:
     - number: 4
       label: root
-      size_mib: 16384 # At least 8192
+      size_mib: 32768 # At least 8192
       resize: true
     - size_mib: 0
       label: var
-  - device: /dev/sdb
+  - device: /dev/sda # HDD for backup and mass storage
     wipe_table: true
     partitions:
     - size_mib: 0
       start_mib: 0
       label: storage
+  - device: /dev/sdb # Main SSD for primary storage
+    wipe_table: true
+    partitions:
+    - size_mib: 0
+      start_mib: 0
+      label: volumes
   filesystems:
     - path: /var
       device: /dev/disk/by-partlabel/var
+      format: ext4
+      wipe_filesystem: true
+      with_mount_unit: true
+    - path: /var/volumes
+      device: /dev/disk/by-partlabel/volumes
       format: ext4
       wipe_filesystem: true
       with_mount_unit: true
@@ -111,21 +124,8 @@ storage:
       wipe_filesystem: true
       with_mount_unit: true
   directories:
-    - path: /var/data/k3s # Kubernetes persistent data
-    - path: /var/storage/config # Configuration files intended to be managed by the user
-    - path: /var/storage/backup/k3s # Backup of k3s data
-  files:
-    - path: /etc/zincati/config.d/90-custom.toml
-      overwrite: true
-      contents:
-        inline: |
-          [updates]
-          strategy = "periodic"
-          periodic.interval_minutes = 1440 # Checks for updates every 24h
-
-          [updates.allow_downgrade]
-          enabled = false  # Avoid downgrades
-
-          [reboot]
-          strategy = "off" # Disable reboot, since server reboots on daily basis anyway
-      mode: 0644
+    - path: /var/k3s # Kubernetes data
+    - path: /var/volumes # Kubernetes persistent volumes
+    - path: /var/storage/backup/k3s # Backup of kubernetes data
+    - path: /var/storage/backup/volumes # Backup of persistent volumes
+    - path: /var/storage/config # Configuration files managed by the user
