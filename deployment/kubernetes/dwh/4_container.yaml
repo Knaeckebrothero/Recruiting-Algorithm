@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:5.7
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "500m"
+          limits:
+            memory: "4Gi"
+            cpu: "1000m"
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "DB_ROOT_PASSWORD_GOES_IN_HERE"
+        ports:
+        - containerPort: 3306
+          name: mysql
+        args:
+          - "--innodb-buffer-pool-size=3G"
+          - "--ssl-ca=/mysql-certs/ca.pem"
+          - "--ssl-cert=/mysql-certs/server-cert.pem"
+          - "--ssl-key=/mysql-certs/server-key.pem"
+        volumeMounts:
+        - name: mysql-data
+          mountPath: /var/lib/mysql
+        - name: cert-volume
+          mountPath: /mysql-certs
+          readOnly: true
+      volumes:
+      - name: mysql-data
+        persistentVolumeClaim:
+          claimName: pvc-mysql
+      - name: cert-volume
+        secret:
+          secretName: mysql-certs
