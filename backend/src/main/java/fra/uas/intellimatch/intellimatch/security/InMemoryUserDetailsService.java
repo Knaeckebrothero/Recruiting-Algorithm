@@ -1,6 +1,6 @@
 package fra.uas.intellimatch.intellimatch.security;
 
-import fra.uas.intellimatch.intellimatch.dto.User;
+import fra.uas.intellimatch.intellimatch.user.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -21,14 +21,28 @@ public class InMemoryUserDetailsService implements UserDetailsService {
     private final Map<String, User> users = new ConcurrentHashMap<>();
 
     public InMemoryUserDetailsService() {
-        users.put(USER,new User(USER, "{noop}"+USER, List.of(USER_ROLE)));
-        users.put(BUSINESSUSER, new User(BUSINESSUSER, "{noop}"+BUSINESSUSER, List.of(BUSINESSUSER_ROLE)));
+        users.put(USER, new User(
+                USER,
+                "{noop}" + USER,
+                List.of(USER_ROLE),
+                "User",       // Beispiel-Vorname
+                "Example",    // Beispiel-Nachname
+                "1234 Address Street"  // Beispiel-Adresse
+        ));
+        users.put(BUSINESSUSER, new User(
+                BUSINESSUSER,
+                "{noop}" + BUSINESSUSER,
+                List.of(BUSINESSUSER_ROLE),
+                "Business",   // Beispiel-Vorname
+                "User",       // Beispiel-Nachname
+                "4321 Business Ave"    // Beispiel-Adresse
+        ));
     }
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return Optional.ofNullable(users.get(username))
                 .map(this::getUser)
-                .orElseThrow(()-> new RuntimeException(String.format( "user = %s not present ", username)));
+                .orElseThrow(() -> new RuntimeException(String.format("user = %s not present", username)));
     }
     private UserDetails getUser(User user) {
         return org.springframework.security.core.userdetails.User
@@ -44,3 +58,4 @@ public class InMemoryUserDetailsService implements UserDetailsService {
         users.put(user.username(), user);
     }
 }
+

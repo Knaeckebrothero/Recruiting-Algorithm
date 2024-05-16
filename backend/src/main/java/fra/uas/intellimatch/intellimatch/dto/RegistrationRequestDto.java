@@ -11,5 +11,14 @@ public record RegistrationRequestDto(
         String email,
 
         @Schema(example = "securePassword123", description = "Password for the new user")
-        String password) {
+        String password,
+
+        @Schema(example = "John", description = "First name of the new user")
+        String firstname,
+
+        @Schema(example = "Doe", description = "Last name of the new user")
+        String lastname,
+
+        @Schema(example = "123 Main St", description = "Address of the new user")
+        String address) {
 }

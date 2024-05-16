@@ -1,6 +1,6 @@
 package fra.uas.intellimatch.intellimatch.security;
 
-import fra.uas.intellimatch.intellimatch.filter.JwtAuthenticationFilter;
+import fra.uas.intellimatch.intellimatch.auth.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

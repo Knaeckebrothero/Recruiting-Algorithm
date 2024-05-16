@@ -1,4 +1,4 @@
-package fra.uas.intellimatch.intellimatch.filter;
+package fra.uas.intellimatch.intellimatch.auth;
 
 import fra.uas.intellimatch.intellimatch.service.JwtService;
 import jakarta.servlet.FilterChain;

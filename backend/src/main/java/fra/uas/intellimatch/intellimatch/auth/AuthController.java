@@ -1,8 +1,6 @@
-package fra.uas.intellimatch.intellimatch.controller;
+package fra.uas.intellimatch.intellimatch.auth;
 
-import fra.uas.intellimatch.intellimatch.dto.AuthRequestDto;
 import fra.uas.intellimatch.intellimatch.dto.RegistrationRequestDto;
-import fra.uas.intellimatch.intellimatch.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;

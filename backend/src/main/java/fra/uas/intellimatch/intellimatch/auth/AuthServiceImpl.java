@@ -1,10 +1,8 @@
-package fra.uas.intellimatch.intellimatch.service.impl;
+package fra.uas.intellimatch.intellimatch.auth;
 
-import fra.uas.intellimatch.intellimatch.dto.AuthRequestDto;
 import fra.uas.intellimatch.intellimatch.dto.RegistrationRequestDto;
-import fra.uas.intellimatch.intellimatch.dto.User;
+import fra.uas.intellimatch.intellimatch.user.User;
 import fra.uas.intellimatch.intellimatch.security.InMemoryUserDetailsService;
-import fra.uas.intellimatch.intellimatch.service.AuthService;
 import fra.uas.intellimatch.intellimatch.service.JwtService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +30,15 @@ public class AuthServiceImpl implements AuthService {
     }
     @Override
     public Map<String, String> registerUser(RegistrationRequestDto registrationRequestDto) {
-        userDetailsService.saveUser(new User(registrationRequestDto.username(), "{noop}" + registrationRequestDto.password(), List.of("USER")));
+        User newUser = new User(
+                registrationRequestDto.username(),
+                "{noop}" + registrationRequestDto.password(),
+                List.of("USER"),
+                registrationRequestDto.firstname(),
+                registrationRequestDto.lastname(),
+                registrationRequestDto.address()
+        );
+        ((InMemoryUserDetailsService)userDetailsService).saveUser(newUser);
         return Map.of("message", "User registered successfully");
     }
     public Map<String, String> getToken( UserDetails userDetails) {
