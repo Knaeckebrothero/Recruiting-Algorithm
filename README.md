@@ -14,7 +14,7 @@
 ### References
 
 - [API](https://docs.google.com/spreadsheets/d/1itYdtVbfjQgLpScrXZugvm9qUZenOuqP/edit?usp=sharing&ouid=112245649497495850593&rtpof=true&sd=true)
-- [Frontend](https://university-projekt.vercel.app/)
+- [Frontend]([https://university-projekt.vercel.app/](https://knaeckebrothero.github.io/University-Projekt-SoSe24/))
 - [Server](109.91.181.97)
 
 ### Data warehouse
