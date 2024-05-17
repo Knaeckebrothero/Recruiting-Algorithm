@@ -14,7 +14,7 @@
 ### References
 
 - [API]([REDACTED])
-- [Frontend](https://university-projekt.vercel.app/](https://knaeckebrothero.github.io/University-Projekt-SoSe24/))
+- [Frontend](https://knaeckebrothero.github.io/University-Projekt-SoSe24/)
 - [Server]([REDACTED])
 
 ### Data warehouse
