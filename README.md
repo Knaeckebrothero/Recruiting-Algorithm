@@ -15,6 +15,8 @@
 
 - [API]([REDACTED])
 - [Frontend](https://knaeckebrothero.github.io/University-Projekt-SoSe24/)
+
+- [Monitoring Dashboard](http://[REDACTED]:3000/d/rYdddlPWk/node-exporter?orgId=1&refresh=1m) Admin, [Password]([REDACTED])
 - [Server]([REDACTED])
 
 ### Data warehouse
