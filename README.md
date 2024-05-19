@@ -29,7 +29,7 @@ You can download MySQL Workbench here:<br>
 You can use the following credentials to connect to the DWH:
 - Connection Method: TCP/IP
 - Hostname: [IP](109.91.181.97)
-- Port: 31749
+- Port: 31228
 - Username: root
 - Password: [Password](4fAXg!jq@2&8B986hAU@J#T)
 
