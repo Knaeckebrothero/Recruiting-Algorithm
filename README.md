@@ -15,6 +15,8 @@
 
 - [API](https://docs.google.com/spreadsheets/d/1itYdtVbfjQgLpScrXZugvm9qUZenOuqP/edit?usp=sharing&ouid=112245649497495850593&rtpof=true&sd=true)
 - [Frontend](https://knaeckebrothero.github.io/University-Projekt-SoSe24/)
+
+- [Monitoring Dashboard](http://109.91.181.97:3000/d/rYdddlPWk/node-exporter?orgId=1&refresh=1m) Admin, [Password](datengruppe24)
 - [Server](109.91.181.97)
 
 ### Data warehouse
