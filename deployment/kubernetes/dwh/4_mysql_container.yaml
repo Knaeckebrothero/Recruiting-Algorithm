@@ -26,7 +26,7 @@ spec:
             cpu: "1000m"
         env:
         - name: MYSQL_ROOT_PASSWORD
-          value: "DB_ROOT_PASSWORD_GOES_IN_HERE"
+          value: "PASSWORD_GOES_HERE"
         ports:
         - containerPort: 3306
           name: mysql
