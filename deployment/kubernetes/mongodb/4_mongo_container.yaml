@@ -18,11 +18,11 @@ spec:
       - image: mongo:latest
         resources:
           requests:
+            memory: "1Gi"
+            cpu: "250m"
+          limits:
             memory: "2Gi"
             cpu: "500m"
-          limits:
-            memory: "4Gi"
-            cpu: "1000m"
         name: mongo
         ports:
         - containerPort: 27017
@@ -30,7 +30,23 @@ spec:
         volumeMounts:
         - name: mongo-data
           mountPath: /data/db
+        - name: cert-volume
+          mountPath: /mongo-certs
+          readOnly: true
+        command:
+        - mongod
+        - --tlsMode=requireTLS
+        - --tlsCertificateKeyFile=/mongo-certs/server-key.pem
+        - --tlsCAFile=/mongo-certs/ca.pem
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          value: root
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          value: PASSWORD_GOES_HERE
       volumes:
       - name: mongo-data
         persistentVolumeClaim:
           claimName: pvc-mongodb
+      - name: cert-volume
+        secret:
+          secretName: mongo-certs
