@@ -1,24 +1,54 @@
-# Project Title
-
-One Paragraph of project description goes here. Explain what the project is about, what it does, and the value it provides to users.
+# Trost: Projekt - SoSe2024
 
 ## Table of Contents
 
 - [Installation](#installation)
 - [Usage](#usage)
-- [Contributing](#contributing)
 - [License](#license)
 - [Contact](#contact)
-- [Acknowledgements](#acknowledgements)
 
 ## Installation
 
-Describe the installation process here. Include any pre-requisites, required libraries, and how to get the development environment running.
+## Usage
 
-```bash
-# Example command line instructions
-pip install -r requirements.txt
-```
+### References
+
+- [API]([REDACTED])
+- [Frontend](https://knaeckebrothero.github.io/University-Projekt-SoSe24/)
+
+- [Monitoring Dashboard](http://[REDACTED]:3000/d/rYdddlPWk/node-exporter?orgId=1&refresh=1m) Admin, [Password]([REDACTED])
+- [Server]([REDACTED])
+
+### Data warehouse
+
+#### Get a Compatible SQL Client
+You can download MySQL Workbench here:<br>
+[https://dev.mysql.com/downloads/workbench/](https://dev.mysql.com/downloads/workbench/)
+
+#### Setup the Connection to the DWH
+You can use the following credentials to connect to the DWH:
+- Connection Method: TCP/IP
+- Hostname: [IP]([REDACTED])
+- Port: 31228
+- Username: root
+- Password: [Password]([REDACTED])
+
+#### Setup SSL to Encrypt Traffic Between You and the Database
+1. Set "Use SSL" to "Require and Verify CA".
+2. Save the files from the repository deployment/encryption/ssl/ and specify them as follows:
+    - SSL Key: client-key.pem
+    - SSL CERT: client-cert.pem
+    - SSL CA: ca.pem
+
+#### Test the Connection and Close the Window
+**Note:** You may generate your own certificate if desired. If you wish to do so, please reach out to me to get it signed.
+
+### Backend (development)
+1. Clone repo
+2. Install docker
+3. Start docker
+4. Run backend
+5. Spring autocreates dbcontainers and connects them to the backend for testing
 
 ## License
 
