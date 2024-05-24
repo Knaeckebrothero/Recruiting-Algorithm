@@ -54,3 +54,16 @@ db.kaggle_linkedin_proxycurl_profiles.aggregate([
 
     { $project: { interests: 1, textLength: 1 } }
 ]).toArray();
+
+# Find the longest specialities string in the recommendations array for each document
+db.kaggle_linkedin_proxycurl_companies.aggregate([
+    { $unwind: "$specialities" },
+
+    { $addFields: { textLength: { $strLenCP: "$specialities" } } },
+
+    { $sort: { textLength: -1 } },
+
+    { $limit: 1 },
+
+    { $project: { specialities: 1, textLength: 1 } }
+]).toArray();
