@@ -67,3 +67,15 @@ db.kaggle_linkedin_proxycurl_companies.aggregate([
 
     { $project: { specialities: 1, textLength: 1 } }
 ]).toArray();
+
+# Find the longest education string in the recommendations array for each document
+db.kaggle_linkedin_proxycurl_profiles.aggregate([
+    // Unwind the array to transform each element of the array into a separate document
+    { $unwind: "$education" },
+
+    // Group by the degree_name to get unique values
+    { $group: { _id: "$education.degree_name" } },
+
+    // Count the number of unique degree names
+    { $group: { _id: null, count: { $sum: 1 } } }
+])
