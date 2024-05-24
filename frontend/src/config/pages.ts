@@ -6,4 +6,7 @@ export const PAGES = {
   DASHBOARD: {
     HOME: "/i",
   },
+  BIP: {
+    HOME: "/bip",
+  },
 };

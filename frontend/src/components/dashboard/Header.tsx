@@ -31,10 +31,10 @@ export default function Header() {
           Dashboard
         </Link>
         <Link
-          href="#"
+          href={PAGES.BIP.HOME}
           className="text-muted-foreground transition-colors hover:text-foreground flex"
         >
-          Seite 1
+          BIP
         </Link>
         <Link
           href="#"
