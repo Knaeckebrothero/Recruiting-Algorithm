@@ -1,0 +1,56 @@
+# Find the longest language string in the languages array for each document
+db.kaggle_linkedin_proxycurl_profiles.aggregate([
+    // Unwind the languages array into separate documents
+    { $unwind: "$languages" },
+    
+    // Add a new field to each document that stores the length of the language string
+    { $addFields: { languageLength: { $strLenCP: "$languages" } } },
+    
+    // Sort the documents by the length of the language string in descending order
+    { $sort: { languageLength: -1 } },
+    
+    // Limit the output to the top 1 document with the longest language string
+    { $limit: 1 },
+    
+    // Project the desired fields
+    { $project: { languages: 1, languageLength: 1 } }
+]).toArray();
+
+# Find the longest recommendation string in the recommendations array for each document
+db.kaggle_linkedin_proxycurl_profiles.aggregate([
+    { $unwind: "$recommendations" },
+
+    { $addFields: { textLength: { $strLenCP: "$recommendations" } } },
+
+    { $sort: { textLength: -1 } },
+
+    { $limit: 1 },
+
+    { $project: { recommendations: 1, textLength: 1 } }
+]).toArray();
+
+# Find the longest skill string in the recommendations array for each document
+db.kaggle_linkedin_proxycurl_profiles.aggregate([
+    { $unwind: "$skills" },
+
+    { $addFields: { textLength: { $strLenCP: "$skills" } } },
+
+    { $sort: { textLength: -1 } },
+
+    { $limit: 1 },
+
+    { $project: { skills: 1, textLength: 1 } }
+]).toArray();
+
+# Find the longest interest string in the recommendations array for each document
+db.kaggle_linkedin_proxycurl_profiles.aggregate([
+    { $unwind: "$interests" },
+
+    { $addFields: { textLength: { $strLenCP: "$interests" } } },
+
+    { $sort: { textLength: -1 } },
+
+    { $limit: 1 },
+
+    { $project: { interests: 1, textLength: 1 } }
+]).toArray();
