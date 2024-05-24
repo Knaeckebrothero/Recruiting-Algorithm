@@ -1,5 +1,4 @@
 "use client";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -26,12 +25,15 @@ export default function BIPQuestions() {
   return (
     <React.Fragment>
       <div className="w-full ">
-        <Card className="xl:col-span-2" x-chunk="dashboard-01-chunk-4">
+        <Card
+          className="xl:col-span-2 border-none"
+          x-chunk="dashboard-01-chunk-4"
+        >
           <CardHeader className="flex flex-row items-center">
             <div className="grid gap-2">
-              <CardTitle>BIP Umfrage</CardTitle>
+              <CardTitle>BIP Survey</CardTitle>
               <CardDescription>
-                Bitte beantworten Sie alle Umfragen, um die BIP abzuschliesen.
+                Please finish all surveys below.
               </CardDescription>
             </div>
             <Button
@@ -47,11 +49,11 @@ export default function BIPQuestions() {
               </Link>
             </Button>
           </CardHeader>
-          <CardContent>
+          <CardContent className="border-none">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Umfrage</TableHead>
+                  <TableHead>Survey</TableHead>
                   <TableHead className="text-right">Status</TableHead>
                   <TableHead className="text-right">Link</TableHead>
                 </TableRow>
@@ -70,7 +72,7 @@ export default function BIPQuestions() {
                     </TableCell>
                     <TableCell className="text-right">
                       <Button asChild variant="link">
-                        <Link href={`${PAGES.BIP.HOME}/${section.id}`}>
+                        <Link href={`${PAGES.BIP.HOME}/${section.id}/1`}>
                           Weiter
                         </Link>
                       </Button>
