@@ -1,5 +1,5 @@
 # Find the longest language string in the languages array for each document
-db.kaggle_linkedin_proxycurl_profiles.aggregate([
+db.KGL_LIN_PRF.aggregate([
     // Unwind the languages array into separate documents
     { $unwind: "$languages" },
     
@@ -17,7 +17,7 @@ db.kaggle_linkedin_proxycurl_profiles.aggregate([
 ]).toArray();
 
 # Find the longest recommendation string in the recommendations array for each document
-db.kaggle_linkedin_proxycurl_profiles.aggregate([
+db.KGL_LIN_PRF.aggregate([
     { $unwind: "$recommendations" },
 
     { $addFields: { textLength: { $strLenCP: "$recommendations" } } },
@@ -30,7 +30,7 @@ db.kaggle_linkedin_proxycurl_profiles.aggregate([
 ]).toArray();
 
 # Find the longest skill string in the recommendations array for each document
-db.kaggle_linkedin_proxycurl_profiles.aggregate([
+db.KGL_LIN_PRF.aggregate([
     { $unwind: "$skills" },
 
     { $addFields: { textLength: { $strLenCP: "$skills" } } },
@@ -43,7 +43,7 @@ db.kaggle_linkedin_proxycurl_profiles.aggregate([
 ]).toArray();
 
 # Find the longest interest string in the recommendations array for each document
-db.kaggle_linkedin_proxycurl_profiles.aggregate([
+db.KGL_LIN_PRF.aggregate([
     { $unwind: "$interests" },
 
     { $addFields: { textLength: { $strLenCP: "$interests" } } },
@@ -56,7 +56,7 @@ db.kaggle_linkedin_proxycurl_profiles.aggregate([
 ]).toArray();
 
 # Find the longest specialities string in the recommendations array for each document
-db.kaggle_linkedin_proxycurl_companies.aggregate([
+db.KGL_LIN_CMP.aggregate([
     { $unwind: "$specialities" },
 
     { $addFields: { textLength: { $strLenCP: "$specialities" } } },
@@ -69,7 +69,7 @@ db.kaggle_linkedin_proxycurl_companies.aggregate([
 ]).toArray();
 
 # Find the longest education string in the recommendations array for each document
-db.kaggle_linkedin_proxycurl_profiles.aggregate([
+db.KGL_LIN_PRF.aggregate([
     // Unwind the array to transform each element of the array into a separate document
     { $unwind: "$education" },
 
