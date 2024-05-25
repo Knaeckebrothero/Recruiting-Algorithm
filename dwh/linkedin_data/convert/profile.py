@@ -53,3 +53,29 @@ def location(document) -> pd.DataFrame:
 
     # Create and return DataFrame
     return pd.DataFrame([location_dict])
+
+def recommendation(document,) -> pd.DataFrame:
+    """
+    This function converts recommendations to the FACT_PRF_Recommendation table.
+
+    :param document: The document to convert.
+    """
+
+
+
+def related(document) -> pd.DataFrame:
+    """
+    This function converts related profile to the FACT_LIN_Related table.
+
+    :param document: The document to convert.
+    """
+
+    # Create and fill the table
+    related_dict = {
+        'idPerson': document.get('idPerson'),
+        'idRelatedPerson': document.get('idRelatedPerson'),
+        'connectionDegree': document.get('connectionDegree')
+    }
+
+    # Create and return DataFrame
+    return pd.DataFrame([related_dict])
