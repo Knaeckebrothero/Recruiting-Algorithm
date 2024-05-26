@@ -11,27 +11,18 @@ import java.util.Optional;
 @Service
 public class SurveyService {
 
-    private final SurveyRepository surveyRepository;
-
     @Autowired
-    public SurveyService(SurveyRepository surveyRepository) {
-        this.surveyRepository = surveyRepository;
-    }
+    private SurveyRepository surveyRepository;
 
-    public List<Survey> getAllSurveys() {
+    public List<Survey> findAllSurveys() {
         return surveyRepository.findAll();
     }
 
-    public Optional<Survey> getSurveyById(Integer surveyId) {
-        return surveyRepository.findById(surveyId);
+    public Optional<Survey> findSurveyById(int id) {
+        return surveyRepository.findById(id);
     }
 
-    public void saveSurvey(Survey survey) {
-        surveyRepository.save(survey);
-    }
-
-    public void deleteSurvey(Integer surveyId) {
-        surveyRepository.deleteById(surveyId);
+    public Survey saveSurvey(Survey survey) {
+        return surveyRepository.save(survey);
     }
 }
-

@@ -1,4 +1,4 @@
-package fra.uas.intellimatch.intellimatch.service;
+package fra.uas.intellimatch.intellimatch.auth;
 
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;

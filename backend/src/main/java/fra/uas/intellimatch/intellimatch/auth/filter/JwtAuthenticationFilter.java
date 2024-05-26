@@ -1,6 +1,6 @@
-package fra.uas.intellimatch.intellimatch.auth;
+package fra.uas.intellimatch.intellimatch.auth.filter;
 
-import fra.uas.intellimatch.intellimatch.service.JwtService;
+import fra.uas.intellimatch.intellimatch.auth.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

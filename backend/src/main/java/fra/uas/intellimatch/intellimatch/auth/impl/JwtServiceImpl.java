@@ -1,6 +1,6 @@
-package fra.uas.intellimatch.intellimatch.service.impl;
+package fra.uas.intellimatch.intellimatch.auth.impl;
 
-import fra.uas.intellimatch.intellimatch.service.JwtService;
+import fra.uas.intellimatch.intellimatch.auth.JwtService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;

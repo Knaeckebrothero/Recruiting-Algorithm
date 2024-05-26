@@ -1,9 +1,6 @@
 package fra.uas.intellimatch.intellimatch.auth;
 
 import fra.uas.intellimatch.intellimatch.dto.RegistrationRequestDto;
-import fra.uas.intellimatch.intellimatch.user.User;
-import fra.uas.intellimatch.intellimatch.security.InMemoryUserDetailsService;
-import fra.uas.intellimatch.intellimatch.service.JwtService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -20,27 +17,20 @@ import java.util.Map;
 public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
-    private final InMemoryUserDetailsService userDetailsService;
 
     @Override
     public Map<String, String> authRequest(AuthRequestDto authRequestDto) {
-       final var authenticate = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authRequestDto.userName(), authRequestDto.password()));
-       final var userDetails =  (UserDetails) authenticate.getPrincipal();
-       return   getToken(userDetails);
+        final var authenticate = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authRequestDto.userName(), authRequestDto.password()));
+        final var userDetails =  (UserDetails) authenticate.getPrincipal();
+        return   getToken(userDetails);
     }
+
     @Override
     public Map<String, String> registerUser(RegistrationRequestDto registrationRequestDto) {
-        User newUser = new User(
-                registrationRequestDto.username(),
-                "{noop}" + registrationRequestDto.password(),
-                List.of("USER"),
-                registrationRequestDto.firstname(),
-                registrationRequestDto.lastname(),
-                registrationRequestDto.address()
-        );
-        ((InMemoryUserDetailsService)userDetailsService).saveUser(newUser);
-        return Map.of("message", "User registered successfully");
+        return Map.of();
     }
+
+
     public Map<String, String> getToken( UserDetails userDetails) {
         final var roles = userDetails.getAuthorities();
         final var username = userDetails.getUsername();
