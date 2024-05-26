@@ -1,8 +1,5 @@
 # Verwende eine spezifische Java-Version
-FROM eclipse-temurin:17-jdk-alpine
-
-# Add Maintainer Info
-LABEL maintainer="your_email@example.com"
+FROM openjdk:17-jdk-slim
 
 # Add a volume pointing to /tmp
 VOLUME /tmp
