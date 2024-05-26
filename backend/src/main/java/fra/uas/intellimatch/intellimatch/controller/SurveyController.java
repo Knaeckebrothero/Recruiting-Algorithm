@@ -33,6 +33,4 @@ public class SurveyController {
         Survey savedSurvey = surveyService.saveSurvey(survey);
         return ResponseEntity.ok(savedSurvey);
     }
-
-    // Implementieren Sie bei Bedarf weitere Methoden zur Bearbeitung oder zum Löschen von Umfragen
 }
