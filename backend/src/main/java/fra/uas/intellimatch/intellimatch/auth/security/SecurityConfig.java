@@ -1,9 +1,10 @@
-package fra.uas.intellimatch.intellimatch.security;
+package fra.uas.intellimatch.intellimatch.auth.security;
 
 import fra.uas.intellimatch.intellimatch.auth.filter.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -26,9 +27,7 @@ public class SecurityConfig {
                 .cors(AbstractHttpConfigurer::disable)
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/actuator/**","/swagger-ui/**","/v3/api-docs",
-                                "/auth/v1/login", "/auth/v1/register",
-                                "/v3/api-docs/swagger-config")
+                        .requestMatchers("/**")
                         .permitAll()
                         .anyRequest()
                         .authenticated())
@@ -36,8 +35,26 @@ public class SecurityConfig {
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .userDetailsService(userDetailsService)
                 .build();
-
     }
+
+   /* public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        return http
+                .cors(AbstractHttpConfigurer::disable)
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/actuator/**","/swagger-ui/**","/v3/api-docs",
+                                "/auth/v1/login", "/auth/v1/register",
+                                "/v3/api-docs/swagger-config")
+                        .permitAll()
+                        .antMatchers(HttpMethod.GET, "/users/**")
+                        .anyRequest()
+                        .authenticated())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .userDetailsService(userDetailsService)
+                .build();
+
+    }*/
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {

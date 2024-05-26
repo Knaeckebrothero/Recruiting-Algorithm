@@ -1,6 +1,7 @@
 package fra.uas.intellimatch.intellimatch.auth;
 
-import fra.uas.intellimatch.intellimatch.dto.RegistrationRequestDto;
+import fra.uas.intellimatch.intellimatch.auth.dto.AuthRequestDto;
+import fra.uas.intellimatch.intellimatch.auth.dto.RegistrationRequestDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -18,7 +19,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final AuthService authService;
+    private final AuthServiceImpl authService;
+
     @PostMapping("/login")
     public ResponseEntity<Map<String, String>> authRequest(@RequestBody AuthRequestDto authRequestDto) {
         log.info("AuthResource.authRequest start {}", authRequestDto);
@@ -26,6 +28,7 @@ public class AuthController {
         log.info("AuthResource.authRequest end {}", userRegistrationResponse);
         return new ResponseEntity<>(userRegistrationResponse, HttpStatus.OK);
     }
+
     @PostMapping("/register")
     public ResponseEntity<Map<String, String>> registerUser(@RequestBody RegistrationRequestDto registrationRequestDto) {
         log.info("Registration attempt for username: {}", registrationRequestDto.username());

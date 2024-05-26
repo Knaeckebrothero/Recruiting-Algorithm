@@ -1,4 +1,4 @@
-package fra.uas.intellimatch.intellimatch.auth;
+/*package fra.uas.intellimatch.intellimatch.auth;
 
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -11,4 +11,4 @@ public interface JwtService {
     String extractUsername(String token);
     String generateToken(Map<String, Object> extraClaims, String username);
 
-}
+}*/

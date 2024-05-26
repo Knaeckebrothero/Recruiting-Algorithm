@@ -1,40 +1,42 @@
 package fra.uas.intellimatch.intellimatch.auth;
 
-import fra.uas.intellimatch.intellimatch.dto.RegistrationRequestDto;
+import fra.uas.intellimatch.intellimatch.auth.dto.AuthRequestDto;
+import fra.uas.intellimatch.intellimatch.auth.dto.RegistrationRequestDto;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.security.Key;
+import java.util.Collections;
+import java.util.Date;
 import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class AuthServiceImpl implements AuthService {
+public class AuthServiceImpl {
     private final AuthenticationManager authenticationManager;
-    private final JwtService jwtService;
+    private final JwtUtility jwtUtility;
 
-    @Override
     public Map<String, String> authRequest(AuthRequestDto authRequestDto) {
-        final var authenticate = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authRequestDto.userName(), authRequestDto.password()));
-        final var userDetails =  (UserDetails) authenticate.getPrincipal();
-        return   getToken(userDetails);
-    }
-
-    @Override
-    public Map<String, String> registerUser(RegistrationRequestDto registrationRequestDto) {
-        return Map.of();
-    }
-
-
-    public Map<String, String> getToken( UserDetails userDetails) {
-        final var roles = userDetails.getAuthorities();
-        final var username = userDetails.getUsername();
-        final var token = jwtService.generateToken(Map.of("role", roles), username);
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(authRequestDto.username(), authRequestDto.password())
+        );
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        String token = jwtUtility.generateToken(Map.of("role", userDetails.getAuthorities()), userDetails.getUsername());
         return Map.of("token", token);
+    }
+
+    public Map<String, String> registerUser(RegistrationRequestDto registrationRequestDto) {
+        // Logik zur Benutzerregistrierung hier implementieren, falls notwendig
+        return Map.of(); // Rückgabe einer leeren Map oder einer Erfolgsmeldung
     }
 }

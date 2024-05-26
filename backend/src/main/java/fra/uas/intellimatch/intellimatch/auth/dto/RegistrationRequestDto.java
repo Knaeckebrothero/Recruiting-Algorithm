@@ -1,4 +1,4 @@
-package fra.uas.intellimatch.intellimatch.dto;
+package fra.uas.intellimatch.intellimatch.auth.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
