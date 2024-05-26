@@ -8,7 +8,8 @@ import pandas as pd
 from sqlalchemy import create_engine  # Requires pymysql
 from datetime import datetime
 # Import conversion functions
-from convert import profile as pf
+from profile import convert as pf
+from profile import insert as qual
 
 
 # Load environment variables
@@ -242,4 +243,5 @@ for doc in documents:
 
     # Insert qualifications
       !!!  START WITH EXPERIENCE HERE !!!
-        pf.experience(doc.get('experience'), person_id)
+        
+        qual.experience(doc.get('experience'), person_id)
