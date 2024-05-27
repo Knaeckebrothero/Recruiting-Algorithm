@@ -10,7 +10,6 @@ from datetime import datetime
 # Import conversion functions
 from convert import profile as pf
 
-
 # Load environment variables
 load_dotenv(find_dotenv())
 
@@ -26,7 +25,7 @@ counter = 0
 total = collection.count_documents({})
 
 # Get the collection cursor
-documents = collection.find({'public_identifier': 'tatiana-kapkan'})  # collection.find()
+documents = collection.find()  # collection.find()
 
 # Main loop
 for doc in documents:
@@ -97,7 +96,7 @@ for doc in documents:
         # Create and insert DataFrame
         if data:
             pd.DataFrame(data).to_sql('FACT_PRF_Related', dwh, if_exists='append', index=False)
-    
+
     # Insert similarly_named_profiles attribute into related profiles table
     if doc.get('similarly_named_profiles'):
         df_to_add = doc.get('similarly_named_profiles', [])
@@ -331,56 +330,112 @@ for doc in documents:
 
     # Insert education attribute into qualification table
     if doc.get('education') and len(doc.get('education')) > 0:
-            for education in doc.get('education'):
-                # Create and fill the duration dimension table
-                if education.get('starts_at') or education.get('ends_at'):
-                    duration_df = pd.DataFrame([{
-                        'startDate': pf.convert_date(education.get('starts_at')),
-                        'endDate': pf.convert_date(education.get('ends_at'))
-                    }])
-                    # Check if matching records exist
-                    query = """
+        for education in doc.get('education'):
+            # Create and fill the duration dimension table
+            if education.get('starts_at') or education.get('ends_at'):
+                duration_df = pd.DataFrame([{
+                    'startDate': pf.convert_date(education.get('starts_at')),
+                    'endDate': pf.convert_date(education.get('ends_at'))
+                }])
+                # Check if matching records exist
+                query = """
                         SELECT id
                         FROM DIM_PRF_Duration
                         WHERE startDate = %(startDate)s
                         AND endDate = %(endDate)s
                     """
-                    result = pd.read_sql_query(query, dwh, params=duration_df.iloc[0].to_dict())
+                result = pd.read_sql_query(query, dwh, params=duration_df.iloc[0].to_dict())
 
-                    # If matching records found, use existing id
-                    if not result.empty:
-                        duration_id = result.iloc[0]['id']
-                    else:
-                        # If no matching records found, insert a new record and use its id
-                        duration_df.to_sql('DIM_PRF_Duration', dwh, if_exists='append', index=False)
-                        duration_id = pd.read_sql_query("SELECT LAST_INSERT_ID()", dwh).iloc[0, 0]
+                # If matching records found, use existing id
+                if not result.empty:
+                    duration_id = result.iloc[0]['id']
                 else:
-                    duration_id = None
+                    # If no matching records found, insert a new record and use its id
+                    duration_df.to_sql('DIM_PRF_Duration', dwh, if_exists='append', index=False)
+                    duration_id = pd.read_sql_query("SELECT LAST_INSERT_ID()", dwh).iloc[0, 0]
+            else:
+                duration_id = None
 
-                # Create and fill the institution dimension table
-                if education.get('school'):
-                    institution_df = pd.DataFrame([{
-                        'name': education.get('institution'),
-                        'location': None
-                    }])
-                    # Check if matching records exist
-                    query = """
+            # Create and fill the institution dimension table
+            if education.get('school'):
+                institution_df = pd.DataFrame([{
+                    'name': education.get('institution'),
+                    'location': None
+                }])
+                # Check if matching records exist
+                query = """
                         SELECT id
                         FROM DIM_PRF_Institution
                         WHERE name = %(name)s
                         AND location = %(location)s
                     """
-                    result = pd.read_sql_query(query, dwh, params=institution_df.iloc[0].to_dict())
+                result = pd.read_sql_query(query, dwh, params=institution_df.iloc[0].to_dict())
 
-                    # If matching records found, use existing id
-                    if not result.empty:
-                        institution_id = result.iloc[0]['id']
-                    else:
-                        # If no matching records found, insert a new record and use its id
-                        institution_df.to_sql('DIM_PRF_Institution', dwh, if_exists='append', index=False)
-                        institution_id = pd.read_sql_query("SELECT LAST_INSERT_ID()", dwh).iloc[0, 0]
+                # If matching records found, use existing id
+                if not result.empty:
+                    institution_id = result.iloc[0]['id']
                 else:
-                    institution_id = None
+                    # If no matching records found, insert a new record and use its id
+                    institution_df.to_sql('DIM_PRF_Institution', dwh, if_exists='append', index=False)
+                    institution_id = pd.read_sql_query("SELECT LAST_INSERT_ID()", dwh).iloc[0, 0]
+            else:
+                institution_id = None
 
-                # Convert education to FACT_PRF_Qualification table
-                education_df = pf.education(education, person_id, duration_id, institution_id)
+            # Convert education to FACT_PRF_Qualification table
+            education_df = pf.education(education, person_id, duration_id, institution_id)
+
+    # Insert accomplishment_organisations attribute into qualification table
+    if doc.get('accomplishment_organisations') and len(doc.get('accomplishment_organisations')) > 0:
+        for accomplishment in doc.get('accomplishment_organisations'):
+            # Create and fill the duration dimension table
+            if accomplishment.get('starts_at') or accomplishment.get('ends_at'):
+                duration_df = pd.DataFrame([{
+                    'startDate': pf.convert_date(accomplishment.get('starts_at')),
+                    'endDate': pf.convert_date(accomplishment.get('ends_at'))
+                }])
+                # Check if matching records exist
+                query = """
+                    SELECT id
+                    FROM DIM_PRF_Duration
+                    WHERE startDate = %(startDate)s
+                    AND endDate = %(endDate)s
+                """
+                result = pd.read_sql_query(query, dwh, params=duration_df.iloc[0].to_dict())
+
+                # If matching records found, use existing id
+                if not result.empty:
+                    duration_id = result.iloc[0]['id']
+                else:
+                    # If no matching records found, insert a new record and use its id
+                    duration_df.to_sql('DIM_PRF_Duration', dwh, if_exists='append', index=False)
+                    duration_id = pd.read_sql_query("SELECT LAST_INSERT_ID()", dwh).iloc[0, 0]
+            else:
+                duration_id = None
+
+            # Create and fill the institution dimension table
+            if accomplishment.get('org_name'):
+                institution_df = pd.DataFrame([{
+                    'name': accomplishment.get('org_name'),
+                    'location': None
+                }])
+                # Check if matching records exist
+                query = """
+                    SELECT id
+                    FROM DIM_PRF_Institution
+                    WHERE name = %(name)s
+                    AND location = %(location)s
+                """
+                result = pd.read_sql_query(query, dwh, params=institution_df.iloc[0].to_dict())
+
+                # If matching records found, use existing id
+                if not result.empty:
+                    institution_id = result.iloc[0]['id']
+                else:
+                    # If no matching records found, insert a new record and use its id
+                    institution_df.to_sql('DIM_PRF_Institution', dwh, if_exists='append', index=False)
+                    institution_id = pd.read_sql_query("SELECT LAST_INSERT_ID()", dwh).iloc[0, 0]
+            else:
+                institution_id = None
+
+            # Convert accomplishment to FACT_PRF_Qualification table
+            accomplishment_df = pf.accomplishment_organisation(accomplishment, person_id, duration_id, institution_id)

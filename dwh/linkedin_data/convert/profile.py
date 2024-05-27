@@ -130,3 +130,27 @@ def education(education_object: dict, key_person: int, key_duration: int, key_in
 
     # Create and return DataFrame
     return pd.DataFrame([experience_dict])
+
+
+def accomplishment_organisation(accomplishment_object: dict, key_person: int, key_duration: int, key_institution: int):
+    """
+    This function converts qualifications to the FACT_PRF_Qualification table.
+
+    :param key_person: The ID of the person entry in the DWH.
+    :param accomplishment_object: The object to convert.
+    :param key_duration: The ID of the duration entry in the DWH.
+    :param key_institution: The ID of the institution entry in the DWH.
+    """
+
+    # Create and fill the table
+    experience_dict = {
+        'idPerson': key_person,
+        'idDuration': key_duration,
+        'idInstitution': key_institution,
+        'type': 'organisation',
+        'name': accomplishment_object.get('title'),
+        'description': accomplishment_object.get('description')
+    }
+
+    # Create and return DataFrame
+    return pd.DataFrame([experience_dict])
