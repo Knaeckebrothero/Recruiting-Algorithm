@@ -20,7 +20,6 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthServiceImpl authService;
-
     @PostMapping("/login")
     public ResponseEntity<Map<String, String>> authRequest(@RequestBody AuthRequestDto authRequestDto) {
         log.info("AuthResource.authRequest start {}", authRequestDto);
@@ -28,7 +27,6 @@ public class AuthController {
         log.info("AuthResource.authRequest end {}", userRegistrationResponse);
         return new ResponseEntity<>(userRegistrationResponse, HttpStatus.OK);
     }
-
     @PostMapping("/register")
     public ResponseEntity<Map<String, String>> registerUser(@RequestBody RegistrationRequestDto registrationRequestDto) {
         log.info("Registration attempt for username: {}", registrationRequestDto.username());

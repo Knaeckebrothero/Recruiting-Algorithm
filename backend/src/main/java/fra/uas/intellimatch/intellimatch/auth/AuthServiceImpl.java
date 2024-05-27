@@ -1,67 +1,67 @@
 package fra.uas.intellimatch.intellimatch.auth;
 
+
 import fra.uas.intellimatch.intellimatch.auth.dto.AuthRequestDto;
 import fra.uas.intellimatch.intellimatch.auth.dto.RegistrationRequestDto;
 import fra.uas.intellimatch.intellimatch.model.User;
 import fra.uas.intellimatch.intellimatch.repository.UserRepository;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
-import java.security.Key;
-import java.util.Collections;
-import java.util.Date;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
-    private final JwtUtility jwtUtility;
+    private final JwtService jwtService;
+    private final InMemoryUserDetailsService userDetailsService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
     public Map<String, String> authRequest(AuthRequestDto authRequestDto) {
-        return Map.of();
+        final var authenticate = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authRequestDto.userName(), authRequestDto.password()));
+        final var userDetails = (UserDetails) authenticate.getPrincipal();
+        return getToken(userDetails);
     }
 
     @Override
     public Map<String, String> registerUser(RegistrationRequestDto registrationRequestDto) {
-        userRepository.findByUsername(registrationRequestDto.username()).ifPresent(user -> {
-            throw new IllegalArgumentException ("Username already exists: " + registrationRequestDto.username());
-        });
+        // Überprüfen, ob der Benutzer bereits existiert
+        Optional<User> existingUser = userRepository.findByUsername(registrationRequestDto.username());
+        if (existingUser.isPresent()) {
+            throw new RuntimeException("User already exists");
+        }
 
+        // Erstellen und Speichern des neuen Benutzers
         User newUser = new User(
                 registrationRequestDto.username(),
                 passwordEncoder.encode(registrationRequestDto.password()),
                 registrationRequestDto.firstname(),
                 registrationRequestDto.lastname(),
-                registrationRequestDto.street(),
-                registrationRequestDto.city(),
-                Collections.singletonList(registrationRequestDto.role())
+                registrationRequestDto.role(),
+                new User.Address(registrationRequestDto.street(), registrationRequestDto.city())
         );
-
         userRepository.save(newUser);
+        return Map.of("message", "User registered successfully");
+    }
 
-        // Generierung des JWT für den neu registrierten Benutzer
-        String token = jwtUtility.generateToken(Map.of("role", newUser.getRole()), newUser.getName());
 
-        log.info("User registered successfully: {}", registrationRequestDto.username());
-
-        return Map.of(
-                "message", "User registered successfully",
-                "token", token
-        );
+    public Map<String, String> getToken(UserDetails userDetails) {
+        final var roles = userDetails.getAuthorities();
+        final var username = userDetails.getUsername();
+        final var token = jwtService.generateToken(Map.of("role", roles), username);
+        return Map.of("token", token);
     }
 }
