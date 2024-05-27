@@ -6,20 +6,6 @@ import pandas as pd
 import datetime
 
 
-def _convert_date(date) -> datetime.date | None:
-    """
-        This function converts a date dictionary from MongoDB to a Python datetime.date object.
-        This date can be inserted into a MySQL DATE column as it inherently matches the required format.
-    
-        :param date: The date dictionary to convert.
-        :return: A date object or None if the date is not complete.
-    """
-    if date and all(k in date for k in ['year', 'month', 'day']):
-        return datetime.date(year=date['year'], month=date['month'], day=date['day'])
-    else:
-        return None
-
-
 def person(document: dict, dimension_key_location: int, dimension_key_origin: int) -> pd.DataFrame:
     """
     This function converts a profile to the FACT_PRF_Person table.
@@ -70,7 +56,21 @@ def location(document: dict) -> pd.DataFrame:
     return pd.DataFrame([location_dict])
 
 
-def experience(experience_object: dict, key_person: int, key_duration: int = None, key_institution: int = None):
+def convert_date(date_object: dict) -> datetime.date | None:
+    """
+        This function converts a date dictionary from MongoDB to a Python datetime.date object.
+        This date can be inserted into a MySQL DATE column as it inherently matches the required format.
+
+        :param date_object: The date dictionary to convert.
+        :return: A date object or None if the date is not complete.
+    """
+    if date_object and all(k in date_object for k in ['year', 'month', 'day']):
+        return datetime.date(year=date_object['year'], month=date_object['month'], day=date_object['day'])
+    else:
+        return None
+
+
+def experience(experience_object: dict, key_person: int, key_duration: int, key_institution: int):
     """
     This function converts qualifications to the FACT_PRF_Qualification table.
 
@@ -90,17 +90,43 @@ def experience(experience_object: dict, key_person: int, key_duration: int = Non
         'description': experience_object.get('description')
     }
 
-    # Create and fill the duration dimension table
-    duration_dict = {
-        'startDate': _convert_date(experience_object.get('starts_at')),
-        'endDate': _convert_date(experience_object.get('ends_at'))
+    # Create and return DataFrame
+    return pd.DataFrame([experience_dict])
+
+
+def education(education_object: dict, key_person: int, key_duration: int, key_institution: int):
+    """
+    This function converts qualifications to the FACT_PRF_Qualification table.
+
+    :param key_person: The ID of the person entry in the DWH.
+    :param education_object: The education object to convert.
+    :param key_duration: The ID of the duration entry in the DWH.
+    :param key_institution: The ID of the institution entry in the DWH.
+    """
+
+    degree_name = education_object.get('degree_name', None)
+    field_of_study = education_object.get('field_of_study', None)
+
+    # Use match case to determine the value of 'name'
+    match (degree_name, field_of_study):
+        case (None, None):
+            name = None
+        case (None, _):
+            name = field_of_study
+        case (_, None):
+            name = degree_name
+        case _:
+            name = f"{degree_name} in {field_of_study}"
+
+    # Create and fill the table
+    experience_dict = {
+        'idPerson': key_person,
+        'idDuration': key_duration,
+        'idInstitution': key_institution,
+        'type': 'education',
+        'name': name,
+        'description': education_object.get('description')
     }
 
-    # Create and fill the institution dimension table
-    institution_dict = {
-        'name': experience_object.get('company'),
-        'location': experience_object.get('location')
-    }
-
-    # Create and return DataFrames
-    return pd.DataFrame([experience_dict]), pd.DataFrame([duration_dict]), pd.DataFrame([institution_dict])
+    # Create and return DataFrame
+    return pd.DataFrame([experience_dict])
