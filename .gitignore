@@ -52,11 +52,11 @@ coverage.xml
 *.log
 *.ctxt
 .mtj.tmp/
-*.jar
+#*.jar
 *.war
 *.ear
 hs_err_pid*
-application.properties
+#application.properties
 
 # JavaScript / React
 logs
