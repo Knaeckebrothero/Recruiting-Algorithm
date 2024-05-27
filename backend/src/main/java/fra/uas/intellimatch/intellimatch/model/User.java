@@ -3,6 +3,8 @@ package fra.uas.intellimatch.intellimatch.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.List;
+
 @Entity
 @Data
 @NoArgsConstructor
@@ -20,6 +22,10 @@ public class User {
 
     @Embedded
     private Address address;
+
+    public User(String username, String encode, String firstname, String lastname, String street, String city, List<String> strings) {
+    }
+
 
     @Embeddable
     @Data
