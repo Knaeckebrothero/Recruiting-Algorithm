@@ -22,5 +22,5 @@ services:
       - SPRING_DATASOURCE_PASSWORD=postgres
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
     ports:
-      - "8080:8080"  # Freigabe des Ports 8080 vom Container zum Host
+      - "8080:8080"
 
