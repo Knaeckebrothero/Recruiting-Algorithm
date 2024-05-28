@@ -74,10 +74,10 @@ for doc in documents:
     
     # Insert certifications
     insert.certifications(doc, person_id, dwh)
-
-    # START WITH accomplishments!!!
     
     # Do i want to save organizations to qualifications or to acomplishments?
 
     # activities to acomplishments
     # articles to acomplishments
+
+    # START WITH accomplishments HERE!!!
