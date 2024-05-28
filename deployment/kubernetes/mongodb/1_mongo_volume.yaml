@@ -4,7 +4,7 @@ metadata:
   name: pv-mongodb
 spec:
   capacity:
-    storage: 128Gi
+    storage: 64Gi
   accessModes:
     - ReadWriteOnce
   hostPath:
