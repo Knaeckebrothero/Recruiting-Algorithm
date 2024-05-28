@@ -472,3 +472,48 @@ def volunteer_work(document: dict, person_id: int, dwh_engine):
 
             # Insert volunteer data
             volunteer_df.to_sql('FACT_PRF_Qualification', dwh_engine, if_exists='append', index=False)
+
+
+def certifications(document: dict, person_id: int, dwh_engine):
+    """
+    This function inserts certifications into the DWH.
+
+    DWH tables: FACT_PRF_Qualification, DIM_PRF_Duration
+
+    :param document: The document to convert.
+    :param person_id: The ID of the person in the DWH.
+    :param dwh_engine: The DWH engine to use.
+    """
+    if document.get('certifications') and len(document.get('certifications')) > 0:
+        for certification in document.get('certifications'):
+            # Create and fill the duration dimension table
+            if certification.get('starts_at') or certification.get('ends_at'):
+                duration_df = pd.DataFrame([{
+                    'startDate': conv.convert_date(certification.get('starts_at')),
+                    'endDate': conv.convert_date(certification.get('ends_at'))
+                }])
+                # Check if matching records exist
+                query = """
+                    SELECT id
+                    FROM DIM_PRF_Duration
+                    WHERE startDate = %(startDate)s
+                    AND endDate = %(endDate)s
+                """
+                result = pd.read_sql_query(query, dwh_engine, params=duration_df.iloc[0].to_dict())
+
+                # If matching records found, use existing id
+                if not result.empty:
+                    duration_id = result.iloc[0]['id']
+                else:
+                    # If no matching records found, insert a new record and use its id
+                    duration_df.to_sql('DIM_PRF_Duration', dwh_engine, if_exists='append', index=False)
+                    duration_id = pd.read_sql_query("SELECT LAST_INSERT_ID()", dwh_engine).iloc[0, 0]
+            else:
+                duration_id = None
+
+            # Convert certification to FACT_PRF_Qualification table
+            certification_df = conv.certification(certification, person_id, duration_id)
+
+            # Insert certification data
+            certification_df.to_sql('FACT_PRF_Qualification', dwh_engine, if_exists='append', index=False)
+        
