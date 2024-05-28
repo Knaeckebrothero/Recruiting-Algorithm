@@ -139,10 +139,11 @@ def volunteer_work(volunteer_object: dict, key_person: int, key_duration: int):
     :param key_duration: The ID of the duration entry in the DWH.
     """
 
+    # Get the cause and description
     cause = volunteer_object.get('cause', None)
     description = volunteer_object.get('description', None)
 
-    # Use match case to determine the value of 'name'
+    # Use match case to determine the description
     match (cause, description):
         case (None, None):
             comb_description = None
@@ -160,6 +161,43 @@ def volunteer_work(volunteer_object: dict, key_person: int, key_duration: int):
         'type': 'volunteer',
         'name': volunteer_object.get('title'),
         'institution': volunteer_object.get('company'),
+        'description': comb_description
+    }
+
+    # Create and return DataFrame
+    return pd.DataFrame([experience_dict])
+
+def certification(certification_object: dict, key_person: int, key_duration: int):
+    """
+    This function converts qualifications to the FACT_PRF_Qualification table.
+
+    :param key_person: The ID of the person entry in the DWH.
+    :param certification_object: The certification object to convert.
+    :param key_duration: The ID of the duration entry in the DWH.
+    """
+    
+    # Get the license number and display source
+    license_number = certification_object.get('license_number', None)
+    display_source = certification_object.get('display_source', None)
+
+    # Use match case to determine the description
+    match (license_number, display_source):
+        case (None, None):
+            comb_description = None
+        case (None, _):
+            comb_description = display_source
+        case (_, None):
+            comb_description = license_number
+        case _:
+            comb_description = f"Cause: {license_number} | Description:{display_source}"
+
+    # Create and fill the table
+    experience_dict = {
+        'idPerson': key_person,
+        'idDuration': key_duration,
+        'type': 'certification',
+        'name': certification_object.get('name'),
+        'institution': certification_object.get('authority'),
         'description': comb_description
     }
 

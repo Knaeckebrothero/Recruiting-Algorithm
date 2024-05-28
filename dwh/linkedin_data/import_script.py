@@ -4,11 +4,11 @@ This script is used to import LinkedIn data from the MongoDB database into the D
 import os
 from dotenv import load_dotenv, find_dotenv
 from pymongo import MongoClient
-import pandas as pd
 from sqlalchemy import create_engine  # Requires pymysql
-from datetime import datetime
+
 # Import insertion functions
 from dwh.linkedin_data.profiles import insert
+
 
 # Load environment variables
 load_dotenv(find_dotenv())
@@ -72,3 +72,12 @@ for doc in documents:
     # Insert volunteer_work
     insert.volunteer_work(doc, person_id, dwh)
     
+    # Insert certifications
+    insert.certifications(doc, person_id, dwh)
+
+    # START WITH accomplishments!!!
+    
+    # Do i want to save organizations to qualifications or to acomplishments?
+
+    # activities to acomplishments
+    # articles to acomplishments
