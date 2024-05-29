@@ -4,7 +4,7 @@ metadata:
   name: pv-mysql
 spec:
   capacity:
-    storage: 64Gi
+    storage: 128Gi
   accessModes:
     - ReadWriteOnce
   hostPath:
