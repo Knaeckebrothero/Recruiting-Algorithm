@@ -10,11 +10,11 @@ ssl_config = {
 }
 
 mydb = pymysql.connect(
-    host='109.91.181.97',
-    port=31228,
-    user='root',
-    password='4fjq28B986hAUJ398cj6T',
-    database='DWH1',
+    host='',
+    port=,
+    user='',
+    password='',
+    database='',
     ssl_ca = ssl_config['ca'],
     ssl_cert = ssl_config['cert'],
     ssl_key = ssl_config['key'])
