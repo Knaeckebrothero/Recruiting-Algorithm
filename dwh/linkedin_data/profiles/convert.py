@@ -167,6 +167,7 @@ def volunteer_work(volunteer_object: dict, key_person: int, key_duration: int):
     # Create and return DataFrame
     return pd.DataFrame([experience_dict])
 
+
 def certification(certification_object: dict, key_person: int, key_duration: int):
     """
     This function converts qualifications to the FACT_PRF_Qualification table.
@@ -175,7 +176,7 @@ def certification(certification_object: dict, key_person: int, key_duration: int
     :param certification_object: The certification object to convert.
     :param key_duration: The ID of the duration entry in the DWH.
     """
-    
+
     # Get the license number and display source
     license_number = certification_object.get('license_number', None)
     display_source = certification_object.get('display_source', None)
@@ -205,12 +206,12 @@ def certification(certification_object: dict, key_person: int, key_duration: int
     return pd.DataFrame([experience_dict])
 
 
-def accomplishment_organisation(accomplishment_object: dict, key_person: int, key_duration: int):
+def accomplishment_projects(accomplishment_object: dict, key_person: int, key_duration: int):
     """
     This function converts qualifications to the FACT_PRF_Qualification table.
 
     :param key_person: The ID of the person entry in the DWH.
-    :param accomplishment_object: The object to convert.
+    :param accomplishment_object: The accomplishment object to convert.
     :param key_duration: The ID of the duration entry in the DWH.
     """
 
@@ -218,78 +219,9 @@ def accomplishment_organisation(accomplishment_object: dict, key_person: int, ke
     experience_dict = {
         'idPerson': key_person,
         'idDuration': key_duration,
-        'type': 'organisation',
+        'type': 'project',
         'name': accomplishment_object.get('title'),
-        'institution': accomplishment_object.get('org_name'),
-        'description': accomplishment_object.get('description')
-    }
-
-    # Create and return DataFrame
-    return pd.DataFrame([experience_dict])
-
-
-def accomplishment_publications(accomplishment_object: dict, key_person: int, key_duration: int):
-    """
-    This function converts qualifications to the FACT_PRF_Qualification table.
-
-    :param key_person: The ID of the person entry in the DWH.
-    :param accomplishment_object: The object to convert.
-    :param key_duration: The ID of the duration entry in the DWH.
-    """
-
-    # Create and fill the table
-    experience_dict = {
-        'idPerson': key_person,
-        'idDuration': key_duration,
-        'type': 'publication',
-        'name': accomplishment_object.get('name'),
-        'institution': accomplishment_object.get('publisher'),
-        'description': accomplishment_object.get('description')
-    }
-
-    # Create and return DataFrame
-    return pd.DataFrame([experience_dict])
-
-
-def accomplishment_honors_awards(accomplishment_object: dict, key_person: int, key_duration: int):
-    """
-    This function converts qualifications to the FACT_PRF_Qualification table.
-
-    :param key_person: The ID of the person entry in the DWH.
-    :param accomplishment_object: The object to convert.
-    :param key_duration: The ID of the duration entry in the DWH.
-    """
-
-    # Create and fill the table
-    experience_dict = {
-        'idPerson': key_person,
-        'idDuration': key_duration,
-        'type': 'honor',
-        'name': accomplishment_object.get('title'),
-        'institution': accomplishment_object.get('issuer'),
-        'description': accomplishment_object.get('description')
-    }
-
-    # Create and return DataFrame
-    return pd.DataFrame([experience_dict])
-
-
-def accomplishment_patents(accomplishment_object: dict, key_person: int, key_duration: int):
-    """
-    This function converts qualifications to the FACT_PRF_Qualification table.
-
-    :param key_person: The ID of the person entry in the DWH.
-    :param accomplishment_object: The object to convert.
-    :param key_duration: The ID of the duration entry in the DWH.
-    """
-
-    # Create and fill the table
-    experience_dict = {
-        'idPerson': key_person,
-        'idDuration': key_duration,
-        'type': 'patent',
-        'name': accomplishment_object.get('title'),
-        'institution': accomplishment_object.get('office'),
+        'institution': None,
         'description': accomplishment_object.get('description')
     }
 

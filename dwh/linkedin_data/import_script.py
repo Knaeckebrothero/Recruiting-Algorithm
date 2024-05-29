@@ -17,7 +17,7 @@ load_dotenv(find_dotenv())
 dwh_connection_url = os.getenv("DATABASE_DWH")
 # Add charset to connection string to avoid encoding issues
 dwh = create_engine(dwh_connection_url + '/DWH?charset=utf8mb4')  # dwh = create_engine(dwh_connection_url, echo=True)
-mongodb = MongoClient(os.getenv("MongoClientURI"))["dwh_sources"]
+mongodb = MongoClient(os.getenv("MongoClientURI"))["raw_data"]
 
 # Get the collection details
 collection = mongodb["KGL_LIN_PRF_USA"]
@@ -74,10 +74,30 @@ for doc in documents:
     
     # Insert certifications
     insert.certifications(doc, person_id, dwh)
-    
-    # Do i want to save organizations to qualifications or to acomplishments?
 
-    # activities to acomplishments
-    # articles to acomplishments
+    # Insert activities
+    insert.activities(doc, person_id, dwh)
 
-    # START WITH accomplishments HERE!!!
+    # Insert articles
+    insert.articles(doc, person_id, dwh)
+
+    # Insert accomplishment_organisations
+    insert.accomplishment_organisations(doc, person_id, dwh)
+
+    # Insert accomplishment_publications
+    insert.accomplishment_publications(doc, person_id, dwh)
+
+    # Insert accomplishment_honors_awards
+    insert.accomplishment_honors_awards(doc, person_id, dwh)
+
+    # Insert accomplishment_patents
+    insert.accomplishment_patents(doc, person_id, dwh)
+
+    # Insert accomplishment_test_scores
+    insert.accomplishment_test_scores(doc, person_id, dwh)
+
+    # Insert accomplishment_courses
+    insert.accomplishment_courses(doc, person_id, dwh)
+
+    # Insert accomplishment_projects
+    insert.accomplishment_projects(doc, person_id, dwh)
