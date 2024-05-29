@@ -38,7 +38,7 @@ def location(document: dict, dwh_engine) -> int:
         # If no matching record found, insert a new record and use its id
         location_df.to_sql('DIM_LIN_Location', dwh_engine, if_exists='append', index=False)
         location_id = pd.read_sql_query("SELECT LAST_INSERT_ID()", dwh_engine).iloc[0, 0]
-    
+
     # Return location id
     return location_id
 
@@ -76,11 +76,11 @@ def recommendations(document: dict, person_id: int, dwh_engine):
     :param dwh_engine: The DWH engine to use.
     """
     if document.get('recommendations'):
-        recommendations = document.get('recommendations', [])
+        df_to_add = document.get('recommendations', [])
         data = []
 
         # Populate list with data
-        for rec in recommendations:
+        for rec in df_to_add:
             data.append({
                 'idPerson': person_id,
                 'recommendationText': rec
@@ -118,7 +118,7 @@ def people_also_viewed(document: dict, person_id: int, dwh_engine):
         # Create and insert DataFrame
         if data:
             pd.DataFrame(data).to_sql('FACT_PRF_Related', dwh_engine, if_exists='append', index=False)
-    
+
 
 def similarly_named_profiles(document: dict, person_id: int, dwh_engine):
     """
@@ -516,4 +516,316 @@ def certifications(document: dict, person_id: int, dwh_engine):
 
             # Insert certification data
             certification_df.to_sql('FACT_PRF_Qualification', dwh_engine, if_exists='append', index=False)
-        
+
+
+def activities(document: dict, person_id: int, dwh_engine):
+    """
+    This function inserts activities into the DWH.
+
+    DWH tables: FACT_PRF_Accomplishment
+
+    :param document: The document to convert.
+    :param person_id: The ID of the person in the DWH.
+    :param dwh_engine: The DWH engine to use.
+    """
+    if document.get('activities'):
+        df_to_add = document.get('activities', [])
+        data = []
+
+        # Populate list with data
+        for act in df_to_add:
+            data.append({
+                'idPerson': person_id,
+                'type': 'activity',
+                'name': act.get('title'),
+                'institution': None,
+                'date': None,
+                'description': act.get('activity_status')
+            })
+
+        # Create and insert DataFrame
+        if data:
+            pd.DataFrame(data).to_sql('FACT_PRF_Accomplishment', dwh_engine, if_exists='append', index=False)
+
+
+def articles(document: dict, person_id: int, dwh_engine):
+    """
+    This function inserts articles into the DWH.
+
+    DWH tables: FACT_PRF_Accomplishment
+
+    :param document: The document to convert.
+    :param person_id: The ID of the person in the DWH.
+    :param dwh_engine: The DWH engine to use.
+    """
+    if document.get('articles'):
+        df_to_add = document.get('articles', [])
+        data = []
+
+        # Populate list with data
+        for art in df_to_add:
+            data.append({
+                'idPerson': person_id,
+                'type': 'article',
+                'name': art.get('title'),
+                'institution': art.get('author'),
+                'date': conv.convert_date(art.get('published_date')),
+                'description': art.get('link')
+            })
+
+        # Create and insert DataFrame
+        if data:
+            pd.DataFrame(data).to_sql('FACT_PRF_Accomplishment', dwh_engine, if_exists='append', index=False)
+
+
+def accomplishment_organisations(document: dict, person_id: int, dwh_engine):
+    """
+    This function inserts accomplishment organisations into the DWH.
+
+    DWH tables: FACT_PRF_Accomplishment
+
+    :param document: The document to convert.
+    :param person_id: The ID of the person in the DWH.
+    :param dwh_engine: The DWH engine to use.
+    """
+    if document.get('accomplishment_organisations'):
+        df_to_add = document.get('accomplishment_organisations', [])
+        data = []
+
+        # Populate list with data
+        for org in df_to_add:
+            data.append({
+                'idPerson': person_id,
+                'type': 'organisation',
+                'name': org.get('title'),
+                'institution': org.get('org_name'),
+                'date': conv.convert_date(org.get('starts_at')),
+                'description': org.get('description')
+            })
+
+        # Create and insert DataFrame
+        if data:
+            pd.DataFrame(data).to_sql('FACT_PRF_Accomplishment', dwh_engine, if_exists='append', index=False)
+
+
+def accomplishment_publications(document: dict, person_id: int, dwh_engine):
+    """
+    This function inserts accomplishment publications into the DWH.
+
+    DWH tables: FACT_PRF_Accomplishment
+
+    :param document: The document to convert.
+    :param person_id: The ID of the person in the DWH.
+    :param dwh_engine: The DWH engine to use.
+    """
+    if document.get('accomplishment_publications'):
+        df_to_add = document.get('accomplishment_publications', [])
+        data = []
+
+        # Populate list with data
+        for pub in df_to_add:
+            data.append({
+                'idPerson': person_id,
+                'type': 'publication',
+                'name': pub.get('name'),
+                'institution': pub.get('publisher'),
+                'date': conv.convert_date(pub.get('published_on')),
+                'description': pub.get('description')
+            })
+
+        # Create and insert DataFrame
+        if data:
+            pd.DataFrame(data).to_sql('FACT_PRF_Qualification', dwh_engine, if_exists='append', index=False)
+
+
+def accomplishment_honors_awards(document: dict, person_id: int, dwh_engine):
+    """
+    This function inserts accomplishment honor awards into the DWH.
+
+    DWH tables: FACT_PRF_Accomplishment
+
+    :param document: The document to convert.
+    :param person_id: The ID of the person in the DWH.
+    :param dwh_engine: The DWH engine to use.
+    """
+    if document.get('accomplishment_honors_awards'):
+        df_to_add = document.get('accomplishment_honors_awards', [])
+        data = []
+
+        # Populate list with data
+        for hon in df_to_add:
+            data.append({
+                'idPerson': person_id,
+                'type': 'honor',
+                'name': hon.get('title'),
+                'institution': hon.get('issuer'),
+                'date': conv.convert_date(hon.get('issued_on')),
+                'description': hon.get('description')
+            })
+
+        # Create and insert DataFrame
+        if data:
+            pd.DataFrame(data).to_sql('FACT_PRF_Qualification', dwh_engine, if_exists='append', index=False)
+
+
+def accomplishment_patents(document: dict, person_id: int, dwh_engine):
+    """
+    This function inserts accomplishment patents into the DWH.
+
+    DWH tables: FACT_PRF_Accomplishment
+
+    :param document: The document to convert.
+    :param person_id: The ID of the person in the DWH.
+    :param dwh_engine: The DWH engine to use.
+    """
+    if document.get('accomplishment_patents'):
+        df_to_add = document.get('accomplishment_patents', [])
+        data = []
+
+        # Populate list with data
+        for pat in df_to_add:
+            # Get the variables
+            application_number = pat.get('application_number', None)
+            patent_number = pat.get('patent_number', None)
+            patent_description = pat.get('description', None)
+
+            # Use match case to determine the description
+            match (application_number, patent_number, patent_description):
+                case (None, None, None):
+                    # If all are None, set the combined description to None
+                    comb_description = None
+                case (None, _, None):
+                    # If only patent_number is available, use it as the description
+                    comb_description = patent_number
+                case (None, _, _):
+                    # If patent_number and description are available, combine them
+                    comb_description = f"{patent_number} | {patent_description}"
+                case (_, None, None):
+                    # If only application_number is available, use it as the description
+                    comb_description = application_number
+                case (_, None, _):
+                    # If application_number and description are available, combine them
+                    comb_description = f"{application_number} | {patent_description}"
+                case (_, _, None):
+                    # If application_number and patent_number are available, combine them
+                    comb_description = f"{application_number} | {patent_number}"
+                case _:
+                    # If all are available, combine all three
+                    comb_description = f"{application_number} | {patent_number} | {patent_description}"
+
+            data.append({
+                'idPerson': person_id,
+                'type': 'patent',
+                'name': pat.get('title'),
+                'institution': pat.get('issuer'),
+                'date': conv.convert_date(pat.get('issued_on')),
+                'description': comb_description
+            })
+
+        # Create and insert DataFrame
+        if data:
+            pd.DataFrame(data).to_sql('FACT_PRF_Accomplishment', dwh_engine, if_exists='append', index=False)
+
+
+def accomplishment_test_scores(document: dict, person_id: int, dwh_engine):
+    """
+    This function inserts accomplishment test scores into the DWH.
+
+    DWH tables: FACT_PRF_Accomplishment
+
+    :param document: The document to convert.
+    :param person_id: The ID of the person in the DWH.
+    :param dwh_engine: The DWH engine to use.
+    """
+    if document.get('accomplishment_test_scores'):
+        df_to_add = document.get('accomplishment_test_scores', [])
+        data = []
+
+        # Populate list with data
+        for tst in df_to_add:
+            data.append({
+                'idPerson': person_id,
+                'type': 'test',
+                'name': tst.get('name'),
+                'institution': tst.get('score'),
+                'date': tst.convert_date(tst.get('date_on')),
+                'description': tst.get('description')
+            })
+
+        # Create and insert DataFrame
+        if data:
+            pd.DataFrame(data).to_sql('FACT_PRF_Accomplishment', dwh_engine, if_exists='append', index=False)
+
+
+def accomplishment_courses(document: dict, person_id: int, dwh_engine):
+    """
+    This function inserts accomplishment courses into the DWH.
+
+    DWH tables: FACT_PRF_Accomplishment
+
+    :param document: The document to convert.
+    :param person_id: The ID of the person in the DWH.
+    :param dwh_engine: The DWH engine to use.
+    """
+    if document.get('accomplishment_courses'):
+        df_to_add = document.get('accomplishment_courses', [])
+        data = []
+
+        # Populate list with data
+        for crs in df_to_add:
+            data.append({
+                'idPerson': person_id,
+                'type': 'course',
+                'name': crs.get('name'),
+                'institution': crs.get('number'),
+                'date': None,
+                'description': None
+            })
+
+        # Create and insert DataFrame
+        if data:
+            pd.DataFrame(data).to_sql('FACT_PRF_Accomplishment', dwh_engine, if_exists='append', index=False)
+
+
+def accomplishment_projects(document: dict, person_id: int, dwh_engine):
+    """
+    This function inserts accomplishment projects into the DWH.
+
+    DWH tables: FACT_PRF_Qualification
+
+    :param document: The document to convert.
+    :param person_id: The ID of the person in the DWH.
+    :param dwh_engine: The DWH engine to use.
+    """
+    if document.get('accomplishment_projects') and len(document.get('accomplishment_projects')) > 0:
+        for project in document.get('accomplishment_projects'):
+            # Create and fill the duration dimension table
+            if project.get('starts_at') or project.get('ends_at'):
+                duration_df = pd.DataFrame([{
+                    'startDate': conv.convert_date(project.get('starts_at')),
+                    'endDate': conv.convert_date(project.get('ends_at'))
+                }])
+                # Check if matching records exist
+                query = """
+                    SELECT id
+                    FROM DIM_PRF_Duration
+                    WHERE startDate = %(startDate)s
+                    AND endDate = %(endDate)s
+                """
+                result = pd.read_sql_query(query, dwh_engine, params=duration_df.iloc[0].to_dict())
+
+                # If matching records found, use existing id
+                if not result.empty:
+                    duration_id = result.iloc[0]['id']
+                else:
+                    # If no matching records found, insert a new record and use its id
+                    duration_df.to_sql('DIM_PRF_Duration', dwh_engine, if_exists='append', index=False)
+                    duration_id = pd.read_sql_query("SELECT LAST_INSERT_ID()", dwh_engine).iloc[0, 0]
+            else:
+                duration_id = None
+
+            # Convert accomplishment_projects to FACT_PRF_Qualification table
+            project_df = conv.accomplishment_projects(project, person_id, duration_id)
+
+            # Insert certification data
+            project_df.to_sql('FACT_PRF_Qualification', dwh_engine, if_exists='append', index=False)
