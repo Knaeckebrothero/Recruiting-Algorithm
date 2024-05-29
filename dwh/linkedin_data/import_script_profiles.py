@@ -20,8 +20,8 @@ dwh = create_engine(dwh_connection_url + '/DWH?charset=utf8mb4')  # dwh = create
 mongodb = MongoClient(os.getenv("MongoClientURI"))["raw_data"]
 
 # Get the collection details
-collection = mongodb["KGL_LIN_PRF_USA"]
-id_origin = 1
+collection = mongodb["KGL_LIN_PRF_DEN"]
+id_origin = 2
 
 # Initialize counter variables
 counter = 0

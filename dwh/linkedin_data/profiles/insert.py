@@ -635,7 +635,7 @@ def accomplishment_publications(document: dict, person_id: int, dwh_engine):
 
         # Create and insert DataFrame
         if data:
-            pd.DataFrame(data).to_sql('FACT_PRF_Qualification', dwh_engine, if_exists='append', index=False)
+            pd.DataFrame(data).to_sql('FACT_PRF_Accomplishment', dwh_engine, if_exists='append', index=False)
 
 
 def accomplishment_honors_awards(document: dict, person_id: int, dwh_engine):
@@ -665,7 +665,7 @@ def accomplishment_honors_awards(document: dict, person_id: int, dwh_engine):
 
         # Create and insert DataFrame
         if data:
-            pd.DataFrame(data).to_sql('FACT_PRF_Qualification', dwh_engine, if_exists='append', index=False)
+            pd.DataFrame(data).to_sql('FACT_PRF_Accomplishment', dwh_engine, if_exists='append', index=False)
 
 
 def accomplishment_patents(document: dict, person_id: int, dwh_engine):
@@ -748,7 +748,7 @@ def accomplishment_test_scores(document: dict, person_id: int, dwh_engine):
                 'type': 'test',
                 'name': tst.get('name'),
                 'institution': tst.get('score'),
-                'date': tst.convert_date(tst.get('date_on')),
+                'date': conv.convert_date(tst.get('date_on')),
                 'description': tst.get('description')
             })
 

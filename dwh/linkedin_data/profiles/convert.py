@@ -15,7 +15,18 @@ def person(document: dict, dimension_key_location: int, dimension_key_origin: in
     :param dimension_key_origin: The ID of the origin in the DWH.
     """
 
-    # Create and fill the table
+    if document.get('gender'):
+        try:
+            if document.get('gender').lower() == 'female':
+                person_gender = 1
+            elif document.get('gender').lower() == 'male':
+                person_gender = 2
+        except Exception as e:
+            print(f"Unknown sex - Error: {e}")
+    else:
+        person_gender = None
+
+        # Create and fill the table
     person_dict = {
         'idLocation': dimension_key_location,
         'name': document.get('full_name'),
@@ -25,7 +36,7 @@ def person(document: dict, dimension_key_location: int, dimension_key_origin: in
         'connections': document.get('connections'),
         'inferredSalaryMin': document.get('inferred_salary').get('min') if document.get('inferred_salary') else None,
         'inferredSalaryMax': document.get('inferred_salary').get('max') if document.get('inferred_salary') else None,
-        'gender': document.get('gender'),
+        'gender': person_gender,
         'industry': document.get('industry'),
         'profilePicture': 1 if document.get('profile_pic_url') else 0,
         'backgroundPicture': 1 if document.get('background_cover_image_url') else 0,
