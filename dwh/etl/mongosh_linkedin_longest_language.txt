@@ -79,3 +79,9 @@ db.KGL_LIN_PRF.aggregate([
     // Count the number of unique degree names
     { $group: { _id: null, count: { $sum: 1 } } }
 ])
+
+# Find companies with more than 2 company sizes
+{"company_size.2": { $exists: true }}
+
+# Find companies with more than 2 locations
+{"locations.2": { $exists: true }}
