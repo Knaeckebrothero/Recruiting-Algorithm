@@ -1,0 +1,20 @@
+apiVersion: autoscaling/v2
+kind: VerticalPodAutoscaler
+metadata:
+  name: vpa-mongodb
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: mongodb
+  updatePolicy:
+    updateMode: Auto
+  resourcePolicy:
+    containerPolicies:
+      - containerName: mongodb
+        minAllowed:
+          cpu: "250m"
+          memory: "1Gi"
+        maxAllowed:
+          cpu: "7000m"
+          memory: "28Gi"
