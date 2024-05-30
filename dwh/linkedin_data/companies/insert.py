@@ -138,6 +138,7 @@ def similar_companies(document: dict, company_id: int, dwh_engine):
         if data:
             pd.DataFrame(data).to_sql('FACT_CMP_Similar', dwh_engine, if_exists='append', index=False)
 
+
 def specialties(document: dict, company_id: int, dwh_engine):
     """
     This function inserts specialties into the DWH.
@@ -148,44 +149,88 @@ def specialties(document: dict, company_id: int, dwh_engine):
     :param company_id: The ID of the company in the DWH.
     :param dwh_engine: The DWH engine to use.
     """
-
-    
-
-
-    if document.get('skills') and len(document.get('skills')) > 0:
-        for skill in document.get('skills'):
+    if document.get('specialities'):
+        for spec in document.get('specialities'):
             # Check if a matching record exists
             query = """
                 SELECT id
-                FROM DIM_PRF_Trait
-                WHERE type = %(type)s
-                AND name = %(name)s
+                FROM DIM_CMP_Specialty
+                WHERE name = %(name)s
             """
-            result = pd.read_sql_query(query, dwh_engine, params={'type': 'skill', 'name': skill})
+            result = pd.read_sql_query(query, dwh_engine, params={'name': spec.strip()})
 
             if not result.empty:
                 # If matching record found, use existing id
-                skill_id = result.iloc[0]['id']
+                spec_id = result.iloc[0]['id']
             else:
                 # If no matching record found, insert a new record and use its id
                 pd.DataFrame([{
-                    'type': 'skill',
-                    'name': skill
-                }]).to_sql('DIM_PRF_Trait', dwh_engine, if_exists='append', index=False)
-                skill_id = pd.read_sql_query("SELECT LAST_INSERT_ID()", dwh_engine).iloc[0, 0]
+                    'name': spec.strip()
+                }]).to_sql('DIM_CMP_Specialty', dwh_engine, if_exists='append', index=False)
+                spec_id = pd.read_sql_query("SELECT LAST_INSERT_ID()", dwh_engine).iloc[0, 0]
 
             # Check if a relationship record already exists
             query = """
                 SELECT *
-                FROM REL_PRF_Person_Trait
-                WHERE idPerson = %(idPerson)s
-                AND idTrait = %(idTrait)s
+                FROM REL_CMP_Company_Specialty
+                WHERE idCompany = %(idCompany)s
+                AND idSpecialty = %(idSpecialty)s
             """
-            result = pd.read_sql_query(query, dwh_engine, params={'idPerson': person_id, 'idTrait': skill_id})
+            result = pd.read_sql_query(query, dwh_engine, params={'idCompany': company_id, 'idSpecialty': spec_id})
 
             # Insert if relationship record does not exist
             if result.empty:
                 pd.DataFrame([{
-                    'idPerson': person_id,
-                    'idTrait': skill_id
-                }]).to_sql('REL_PRF_Person_Trait', dwh_engine, if_exists='append', index=False)
+                    'idCompany': company_id,
+                    'idSpecialty': spec_id
+                }]).to_sql('REL_CMP_Company_Specialty', dwh_engine, if_exists='append', index=False)
+
+def locations(document: dict, company_id: int, dwh_engine):
+    """
+    This function inserts locations into the DWH.
+
+    DWH tables: DIM_LIN_Location, REL_CMP_Company_Location
+
+    :param document: The document to convert.
+    :param company_id: The ID of the company in the DWH.
+    :param dwh_engine: The DWH engine to use.
+    """
+    if document.get('locations'):
+        for loc in document.get('locations'):
+            # Prepare location data
+            location_df = conv.location(loc)
+
+            # Check if a matching record exists
+            query = """
+                SELECT id
+                FROM DIM_LIN_Location
+                WHERE countryLetters = %(countryLetters)s 
+                AND countryName = %(countryName)s
+                AND city = %(city)s
+                AND state = %(state)s
+            """
+            result = pd.read_sql_query(query, dwh_engine, params=location_df.iloc[0].to_dict())
+
+            if not result.empty:
+                # If matching record found, use existing id
+                location_id = result.iloc[0]['id']
+            else:
+                # If no matching record found, insert a new record and use its id
+                location_df.to_sql('DIM_LIN_Location', dwh_engine, if_exists='append', index=False)
+                location_id = pd.read_sql_query("SELECT LAST_INSERT_ID()", dwh_engine).iloc[0, 0]
+
+            # Check if a relationship record already exists
+            query = """
+                SELECT *
+                FROM REL_CMP_Company_Location
+                WHERE idCompany = %(idCompany)s
+                AND idLocation = %(idLocation)s
+            """
+            result = pd.read_sql_query(query, dwh_engine, params={'idCompany': company_id, 'idLocation': location_id})
+
+            # Insert if relationship record does not exist
+            if result.empty:
+                pd.DataFrame([{
+                    'idCompany': company_id,
+                    'idLocation': location_id
+                }]).to_sql('REL_CMP_Company_Location', dwh_engine, if_exists='append', index=False)
