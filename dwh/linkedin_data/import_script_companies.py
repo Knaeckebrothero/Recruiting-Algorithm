@@ -16,11 +16,12 @@ load_dotenv(find_dotenv())
 # !!!UNENCRYPTED CONNECTION ONLY USE ON LAN!!!
 dwh_connection_url = os.getenv("DATABASE_DWH")
 # Add charset to connection string to avoid encoding issues
-dwh = create_engine(dwh_connection_url + '/DWH1?charset=utf8mb4')  # dwh = create_engine(dwh_connection_url, echo=True)
+dwh = create_engine(dwh_connection_url + '/DWH?charset=utf8mb4')  # dwh = create_engine(dwh_connection_url,
+# echo=True)
 mongodb = MongoClient(os.getenv("MongoClientURI"))["raw_data"]
 
 # Get the collection details
-collection = mongodb["KGL_LIN_CMP_SNG"]
+collection = mongodb["KGL_LIN_"]
 id_origin = 0
 
 # Initialize counter variables
