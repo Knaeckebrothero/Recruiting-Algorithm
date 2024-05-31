@@ -85,3 +85,39 @@ db.KGL_LIN_PRF.aggregate([
 
 # Find companies with more than 2 locations
 {"locations.2": { $exists: true }}
+
+# Find persons who aren't devs or nodevs
+db.KGL_TJS.find({
+    $nor: [
+        { MainBranch: "Dev" },
+        { MainBranch: "NotDev" }
+    ]
+})
+db.KGL_TJS.aggregate([
+    {
+        $match: {
+            $nor: [
+                { MainBranch: "Dev" },
+                { MainBranch: "NotDev" }
+            ]
+        }
+    },
+    {
+    $count: "count"
+    }
+])
+
+# Find number of unique ages
+db.KGL_TJS.aggregate([
+    // Group by the Age attribute to create unique groups
+    { $group: { _id: "$Age" } },
+
+    // Count the number of unique Age values
+    { $count: "uniqueAgesCount" }
+])
+
+# Get all genders
+db.KGL_TJS.aggregate([
+    // Group by the Gender attribute to find unique values
+    { $group: { _id: "$Gender" } }
+])
