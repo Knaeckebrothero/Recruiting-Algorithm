@@ -14,7 +14,8 @@ def person(document: dict, dimension_key_location: int, dimension_key_origin: in
     :param dimension_key_location: The ID of the location dimension.
     :param dimension_key_origin: The ID of the origin in the DWH.
     """
-
+    # Get person gender
+    person_gender = None
     if document.get('gender'):
         try:
             if document.get('gender').lower() == 'female':
@@ -23,13 +24,13 @@ def person(document: dict, dimension_key_location: int, dimension_key_origin: in
                 person_gender = 2
         except Exception as e:
             print(f"Unknown sex - Error: {e}")
-    else:
-        person_gender = None
 
         # Create and fill the table
     person_dict = {
         'idLocation': dimension_key_location,
-        'name': document.get('full_name'),
+        'firstName': document.get('first_name'),
+        'lastName': document.get('last_name'),
+        'fullname': document.get('full_name'),
         'occupation': document.get('occupation'),
         'headline': document.get('headline'),
         'summary': document.get('summary'),
@@ -81,18 +82,16 @@ def convert_date(date_object: dict) -> datetime.date | None:
         return None
 
 
-def experience(experience_object: dict, key_person: int, key_duration: int):
+def experience(experience_object: dict, key_duration: int):
     """
     This function converts qualifications to the FACT_PRF_Qualification table.
 
-    :param key_person: The ID of the person entry in the DWH.
     :param experience_object: The experience object to convert.
     :param key_duration: The ID of the duration entry in the DWH.
     """
 
     # Create and fill the table
     experience_dict = {
-        'idPerson': key_person,
         'idDuration': key_duration,
         'type': 'experience',
         'name': experience_object.get('title'),
@@ -104,11 +103,10 @@ def experience(experience_object: dict, key_person: int, key_duration: int):
     return pd.DataFrame([experience_dict])
 
 
-def education(education_object: dict, key_person: int, key_duration: int):
+def education(education_object: dict, key_duration: int):
     """
     This function converts qualifications to the FACT_PRF_Qualification table.
 
-    :param key_person: The ID of the person entry in the DWH.
     :param education_object: The education object to convert.
     :param key_duration: The ID of the duration entry in the DWH.
     """
@@ -129,7 +127,6 @@ def education(education_object: dict, key_person: int, key_duration: int):
 
     # Create and fill the table
     experience_dict = {
-        'idPerson': key_person,
         'idDuration': key_duration,
         'type': 'education',
         'name': name,
@@ -141,11 +138,10 @@ def education(education_object: dict, key_person: int, key_duration: int):
     return pd.DataFrame([experience_dict])
 
 
-def volunteer_work(volunteer_object: dict, key_person: int, key_duration: int):
+def volunteer_work(volunteer_object: dict, key_duration: int):
     """
     This function converts qualifications to the FACT_PRF_Qualification table.
 
-    :param key_person: The ID of the person entry in the DWH.
     :param volunteer_object: The volunteer object to convert.
     :param key_duration: The ID of the duration entry in the DWH.
     """
@@ -167,7 +163,6 @@ def volunteer_work(volunteer_object: dict, key_person: int, key_duration: int):
 
     # Create and fill the table
     experience_dict = {
-        'idPerson': key_person,
         'idDuration': key_duration,
         'type': 'volunteer',
         'name': volunteer_object.get('title'),
@@ -179,11 +174,10 @@ def volunteer_work(volunteer_object: dict, key_person: int, key_duration: int):
     return pd.DataFrame([experience_dict])
 
 
-def certification(certification_object: dict, key_person: int, key_duration: int):
+def certification(certification_object: dict, key_duration: int):
     """
     This function converts qualifications to the FACT_PRF_Qualification table.
 
-    :param key_person: The ID of the person entry in the DWH.
     :param certification_object: The certification object to convert.
     :param key_duration: The ID of the duration entry in the DWH.
     """
@@ -205,7 +199,6 @@ def certification(certification_object: dict, key_person: int, key_duration: int
 
     # Create and fill the table
     experience_dict = {
-        'idPerson': key_person,
         'idDuration': key_duration,
         'type': 'certification',
         'name': certification_object.get('name'),
@@ -217,18 +210,16 @@ def certification(certification_object: dict, key_person: int, key_duration: int
     return pd.DataFrame([experience_dict])
 
 
-def accomplishment_projects(accomplishment_object: dict, key_person: int, key_duration: int):
+def accomplishment_projects(accomplishment_object: dict, key_duration: int):
     """
     This function converts qualifications to the FACT_PRF_Qualification table.
 
-    :param key_person: The ID of the person entry in the DWH.
     :param accomplishment_object: The accomplishment object to convert.
     :param key_duration: The ID of the duration entry in the DWH.
     """
 
     # Create and fill the table
     experience_dict = {
-        'idPerson': key_person,
         'idDuration': key_duration,
         'type': 'project',
         'name': accomplishment_object.get('title'),
