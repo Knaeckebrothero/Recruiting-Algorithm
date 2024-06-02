@@ -47,7 +47,7 @@ def insert_collection_documents(
             key_of_person = insert.person(doc, key_of_location, id_origin, dwh)  # Insert person
 
             # Insert the rest of the data
-            # insert.recommendations(doc, key_of_person, dwh)  # Insert recommendations
+            insert.recommendations(doc, key_of_person, dwh)  # Insert recommendations
             # insert.people_also_viewed(doc, key_of_person, dwh)  # Insert people_also_viewed
             # insert.similarly_named_profiles(doc, key_of_person, dwh)  # Insert similarly_named_profiles
             insert.languages(doc, key_of_person, dwh)  # Insert languages
