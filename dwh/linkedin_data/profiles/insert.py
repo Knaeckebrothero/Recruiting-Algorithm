@@ -2,8 +2,6 @@
 This module holds the functions used to import the individual attributes into the DWH.
 """
 import pandas as pd
-import sqlalchemy  # Requires pymysql
-from datetime import datetime
 # Import conversion functions
 from dwh.linkedin_data.profiles import convert as conv
 
@@ -12,7 +10,7 @@ def location(document: dict, dwh_engine) -> int:
     """
     This function inserts a location into the DWH and returns its ID.
 
-    DWH table: DIM_LIN_Location
+    DWH table: DIM_PRF_Location
 
     :param document: The document to convert.
     :param dwh_engine: The DWH engine to use.
@@ -23,7 +21,7 @@ def location(document: dict, dwh_engine) -> int:
     # Check if a matching record exists
     query = """
         SELECT id
-        FROM DIM_LIN_Location
+        FROM DIM_PRF_Location
         WHERE countryLetters = %(countryLetters)s 
         AND countryName = %(countryName)s
         AND city = %(city)s
@@ -36,7 +34,7 @@ def location(document: dict, dwh_engine) -> int:
         location_id = result.iloc[0]['id']
     else:
         # If no matching record found, insert a new record and use its id
-        location_df.to_sql('DIM_LIN_Location', dwh_engine, if_exists='append', index=False)
+        location_df.to_sql('DIM_PRF_Location', dwh_engine, if_exists='append', index=False)
         location_id = pd.read_sql_query("SELECT LAST_INSERT_ID()", dwh_engine).iloc[0, 0]
 
     # Return location id
@@ -58,7 +56,7 @@ def person(document: dict, location_id: int, origin_id: int, dwh_engine) -> int:
     person_df = conv.person(document, location_id, origin_id)
 
     # Insert person data
-    person_df.to_sql('FACT_PRF_Person', dwh_engine, if_exists='append', index=False)
+    person_df.to_sql('DIM_PRF_Person', dwh_engine, if_exists='append', index=False)
     person_id = pd.read_sql_query("SELECT LAST_INSERT_ID()", dwh_engine).iloc[0, 0]
 
     # Return person id
@@ -95,58 +93,99 @@ def people_also_viewed(document: dict, person_id: int, dwh_engine):
     """
     This function inserts people also viewed into the DWH.
 
-    DWH table: FACT_PRF_Related
+    DWH table: DIM_PRF_Related, REL_PRF_Person_Related
 
     :param document: The document to convert.
     :param person_id: The ID of the person in the DWH.
     :param dwh_engine: The DWH engine to use.
     """
     if document.get('people_also_viewed'):
-        df_to_add = document.get('people_also_viewed', [])
-        data = []
-
-        # Populate list with data
-        for ppl in df_to_add:
-            data.append({
-                'idPerson': person_id,
-                'type': 'viewed',
+        for ppl in document.get('people_also_viewed'):
+            # Check if a matching record exists
+            query = """
+                SELECT id
+                FROM DIM_PRF_Related
+                WHERE name = %(name)s
+                AND location = %(location)s
+            """  # AND summary = %(summary)s  'summary': ppl.get('summary')
+            result = pd.read_sql_query(query, dwh_engine, params={
                 'name': ppl.get('name'),
-                'location': ppl.get('location'),
-                'summary': ppl.get('summary')
+                'location': ppl.get('location')
             })
 
-        # Create and insert DataFrame
-        if data:
-            pd.DataFrame(data).to_sql('FACT_PRF_Related', dwh_engine, if_exists='append', index=False)
+            if not result.empty:
+                # If matching record found, use existing id
+                related_id = result.iloc[0]['id']
+            else:
+                # If no matching record found, insert a new record and use its id
+                pd.DataFrame([{
+                    'name': ppl.get('name'),
+                    'location': ppl.get('location'),
+                    'summary': ppl.get('summary')
+                }]).to_sql('DIM_PRF_Related', dwh_engine, if_exists='append', index=False)
+                related_id = pd.read_sql_query("SELECT LAST_INSERT_ID()", dwh_engine).iloc[0, 0]
+
+            # Insert relationship record
+            pd.DataFrame([{
+                'idPerson': person_id,
+                'idRelated': related_id,
+                'type': 'viewed'
+            }]).to_sql('REL_PRF_Person_Related', dwh_engine, if_exists='append', index=False)
 
 
 def similarly_named_profiles(document: dict, person_id: int, dwh_engine):
     """
     This function inserts similarly named profiles into the DWH.
 
-    DWH table: FACT_PRF_Related
+    DWH table: DIM_PRF_Related, REL_PRF_Person_Related
 
     :param document: The document to convert.
     :param person_id: The ID of the person in the DWH.
     :param dwh_engine: The DWH engine to use.
     """
     if document.get('similarly_named_profiles'):
-        df_to_add = document.get('similarly_named_profiles', [])
-        data = []
-
-        # Populate list with data
-        for ppl in df_to_add:
-            data.append({
-                'idPerson': person_id,
-                'type': 'similar',
-                'name': ppl.get('name'),
-                'location': ppl.get('location'),
-                'summary': ppl.get('summary')
+        for ppl in document.get('similarly_named_profiles'):
+            # Check if a matching record exists
+            query = """
+                SELECT id
+                FROM DIM_PRF_Related
+                WHERE name = %(name)s
+                AND location = %(location)s
+            """  # AND summary = %(summary)s  'summary': ppl.get('summary')
+            result = pd.read_sql_query(query, dwh_engine, params={
+                'name': ppl.get('name'), 'location': ppl.get('location')
             })
 
-        # Create and insert DataFrame
-        if data:
-            pd.DataFrame(data).to_sql('FACT_PRF_Related', dwh_engine, if_exists='append', index=False)
+            if not result.empty:
+                # If matching record found, use existing id
+                related_id = result.iloc[0]['id']
+            else:
+                # If no matching record found, insert a new record and use its id
+                pd.DataFrame([{
+                    'name': ppl.get('name'),
+                    'location': ppl.get('location'),
+                    'summary': ppl.get('summary')
+                }]).to_sql('DIM_PRF_Related', dwh_engine, if_exists='append', index=False)
+                related_id = pd.read_sql_query("SELECT LAST_INSERT_ID()", dwh_engine).iloc[0, 0]
+
+            # Check if a relationship record already exists
+            query = """
+                SELECT *
+                FROM REL_PRF_Person_Related
+                WHERE idPerson = %(idPerson)s
+                AND idRelated = %(idRelated)s
+                AND type = %(type)s
+            """
+            result = pd.read_sql_query(query, dwh_engine, params={
+                'idPerson': person_id, 'idRelated': related_id, 'type': 'similar'})
+
+            # Insert if relationship record does not exist
+            if result.empty:
+                pd.DataFrame([{
+                    'idPerson': person_id,
+                    'idRelated': related_id,
+                    'type': 'similar'
+                }]).to_sql('REL_PRF_Person_Related', dwh_engine, if_exists='append', index=False)
 
 
 def languages(document: dict, person_id: int, dwh_engine):
@@ -179,21 +218,11 @@ def languages(document: dict, person_id: int, dwh_engine):
                 }).to_sql('DIM_PRF_Language', dwh_engine, if_exists='append', index=False)
                 lang_id = pd.read_sql_query("SELECT LAST_INSERT_ID()", dwh_engine).iloc[0, 0]
 
-            # Check if a relationship record already exists
-            query = """
-                SELECT *
-                FROM REL_PRF_Person_Language
-                WHERE idPerson = %(idPerson)s
-                AND idLanguage = %(idLanguage)s
-            """
-            result = pd.read_sql_query(query, dwh_engine, params={'idPerson': person_id, 'idLanguage': lang_id})
-
-            # Insert if relationship record does not exist
-            if result.empty:
-                pd.DataFrame([{
-                    'idPerson': person_id,
-                    'idLanguage': lang_id
-                }]).to_sql('REL_PRF_Person_Language', dwh_engine, if_exists='append', index=False)
+            # Insert relationship record
+            pd.DataFrame([{
+                'idPerson': person_id,
+                'idLanguage': lang_id
+            }]).to_sql('REL_PRF_Person_Language', dwh_engine, if_exists='append', index=False)
 
 
 def skills(document: dict, person_id: int, dwh_engine):
@@ -228,21 +257,11 @@ def skills(document: dict, person_id: int, dwh_engine):
                 }]).to_sql('DIM_PRF_Trait', dwh_engine, if_exists='append', index=False)
                 skill_id = pd.read_sql_query("SELECT LAST_INSERT_ID()", dwh_engine).iloc[0, 0]
 
-            # Check if a relationship record already exists
-            query = """
-                SELECT *
-                FROM REL_PRF_Person_Trait
-                WHERE idPerson = %(idPerson)s
-                AND idTrait = %(idTrait)s
-            """
-            result = pd.read_sql_query(query, dwh_engine, params={'idPerson': person_id, 'idTrait': skill_id})
-
-            # Insert if relationship record does not exist
-            if result.empty:
-                pd.DataFrame([{
-                    'idPerson': person_id,
-                    'idTrait': skill_id
-                }]).to_sql('REL_PRF_Person_Trait', dwh_engine, if_exists='append', index=False)
+            # Insert relationship record
+            pd.DataFrame([{
+                'idPerson': person_id,
+                'idTrait': skill_id
+            }]).to_sql('REL_PRF_Person_Trait', dwh_engine, if_exists='append', index=False)
 
 
 def interests(document: dict, person_id: int, dwh_engine):
@@ -277,21 +296,11 @@ def interests(document: dict, person_id: int, dwh_engine):
                 }]).to_sql('DIM_PRF_Trait', dwh_engine, if_exists='append', index=False)
                 interest_id = pd.read_sql_query("SELECT LAST_INSERT_ID()", dwh_engine).iloc[0, 0]
 
-            # Check if a relationship record already exists
-            query = """
-                SELECT *
-                FROM REL_PRF_Person_Trait
-                WHERE idPerson = %(idPerson)s
-                AND idTrait = %(idTrait)s
-            """
-            result = pd.read_sql_query(query, dwh_engine, params={'idPerson': person_id, 'idTrait': interest_id})
-
-            # Insert if relationship record does not exist
-            if result.empty:
-                pd.DataFrame([{
-                    'idPerson': person_id,
-                    'idTrait': interest_id
-                }]).to_sql('REL_PRF_Person_Trait', dwh_engine, if_exists='append', index=False)
+            # Insert relationship record
+            pd.DataFrame([{
+                'idPerson': person_id,
+                'idTrait': interest_id
+            }]).to_sql('REL_PRF_Person_Trait', dwh_engine, if_exists='append', index=False)
 
 
 def groups(document: dict, person_id: int, dwh_engine):
@@ -325,72 +334,70 @@ def groups(document: dict, person_id: int, dwh_engine):
                     }]).to_sql('DIM_PRF_Group', dwh_engine, if_exists='append', index=False)
                     group_id = pd.read_sql_query("SELECT LAST_INSERT_ID()", dwh_engine).iloc[0, 0]
 
-                # Check if a relationship record already exists
-                query = """
-                    SELECT *
-                    FROM REL_PRF_Person_Group
-                    WHERE idPerson = %(idPerson)s
-                    AND idGroup = %(idGroup)s
-                """
-                result = pd.read_sql_query(query, dwh_engine, params={'idPerson': person_id, 'idGroup': group_id})
-
-                # Insert if relationship record does not exist
-                if result.empty:
-                    pd.DataFrame([{
-                        'idPerson': person_id,
-                        'idGroup': group_id
-                    }]).to_sql('REL_PRF_Person_Group', dwh_engine, if_exists='append', index=False)
+                # Insert relationship record
+                pd.DataFrame([{
+                    'idPerson': person_id,
+                    'idGroup': group_id
+                }]).to_sql('REL_PRF_Person_Group', dwh_engine, if_exists='append', index=False)
 
 
 def experiences(document: dict, person_id: int, dwh_engine):
     """
     This function inserts experiences into the DWH.
 
-    DWH tables: DIM_PRF_Duration, FACT_PRF_Qualification
+    DWH tables: DIM_PRF_Duration, FACT_PRF_Qualification, REL_PRF_Person_Qualification
 
     :param document: The document to convert.
     :param person_id: The ID of the person in the DWH.
     :param dwh_engine: The DWH engine to use.
     """
-    if document.get('experiences') and len(document.get('experiences')) > 0:
-        for experience in document.get('experiences'):
-            # Create and fill the duration dimension table
-            if experience.get('starts_at') or experience.get('ends_at'):
-                duration_df = pd.DataFrame([{
-                    'startDate': conv.convert_date(experience.get('starts_at')),
-                    'endDate': conv.convert_date(experience.get('ends_at'))
-                }])
-                # Check if matching records exist
-                query = """
-                    SELECT id
-                    FROM DIM_PRF_Duration
-                    WHERE startDate = %(startDate)s
-                    AND endDate = %(endDate)s
-                """
-                result = pd.read_sql_query(query, dwh_engine, params=duration_df.iloc[0].to_dict())
+    for experience in document.get('experiences'):
+        # Create and fill the duration dimension table
+        if experience.get('starts_at') or experience.get('ends_at'):
+            duration_df = pd.DataFrame([{
+                'startDate': conv.convert_date(experience.get('starts_at')),
+                'endDate': conv.convert_date(experience.get('ends_at'))
+            }])
+            # Check if matching records exist
+            query = """
+                SELECT id
+                FROM DIM_PRF_Duration
+                WHERE startDate = %(startDate)s
+                AND endDate = %(endDate)s
+            """
+            result = pd.read_sql_query(query, dwh_engine, params=duration_df.iloc[0].to_dict())
 
-                # If matching records found, use existing id
-                if not result.empty:
-                    duration_id = result.iloc[0]['id']
-                else:
-                    # If no matching records found, insert a new record and use its id
-                    duration_df.to_sql('DIM_PRF_Duration', dwh_engine, if_exists='append', index=False)
-                    duration_id = pd.read_sql_query("SELECT LAST_INSERT_ID()", dwh_engine).iloc[0, 0]
+            # If matching records found, use existing id
+            if not result.empty:
+                duration_id = result.iloc[0]['id']
             else:
-                duration_id = None
+                # If no matching records found, insert a new record and use its id
+                duration_df.to_sql('DIM_PRF_Duration', dwh_engine, if_exists='append', index=False)
+                duration_id = pd.read_sql_query("SELECT LAST_INSERT_ID()", dwh_engine).iloc[0, 0]
+        else:
+            duration_id = None
 
-            # Convert experience to FACT_PRF_Qualification table
-            experience_df = conv.experience(experience, person_id, duration_id)
+        # Convert experience to FACT_PRF_Qualification table
+        experience_df = conv.experience(experience, duration_id)
 
-            # Insert experience data
-            experience_df.to_sql('FACT_PRF_Qualification', dwh_engine, if_exists='append', index=False)
+        # Insert experience data
+        experience_df.to_sql('FACT_PRF_Qualification', dwh_engine, if_exists='append', index=False)
+
+        # Create a relationship record
+        rel_df = pd.DataFrame([{
+            'idPerson': person_id,
+            'idQualification': pd.read_sql_query("SELECT LAST_INSERT_ID()", dwh_engine).iloc[0, 0]
+        }])
+
+        # Add the relationship record
+        rel_df.to_sql('REL_PRF_Person_Qualification', dwh_engine, if_exists='append', index=False)
 
 
 def education(document: dict, person_id: int, dwh_engine):
     """
     This function inserts education into the DWH.
 
-    DWH tables: FACT_PRF_Qualification, DIM_PRF_Duration
+    DWH tables: FACT_PRF_Qualification, DIM_PRF_Duration, REL_PRF_Person_Qualification
 
     :param document: The document to convert.
     :param person_id: The ID of the person in the DWH.
@@ -424,17 +431,26 @@ def education(document: dict, person_id: int, dwh_engine):
                 duration_id = None
 
             # Convert education to FACT_PRF_Qualification table
-            education_df = conv.education(education, person_id, duration_id)
+            education_df = conv.education(education, duration_id)
 
             # Insert education data
             education_df.to_sql('FACT_PRF_Qualification', dwh_engine, if_exists='append', index=False)
+
+            # Create a relationship record
+            rel_df = pd.DataFrame([{
+                'idPerson': person_id,
+                'idQualification': pd.read_sql_query("SELECT LAST_INSERT_ID()", dwh_engine).iloc[0, 0]
+            }])
+
+            # Add the relationship record
+            rel_df.to_sql('REL_PRF_Person_Qualification', dwh_engine, if_exists='append', index=False)
 
 
 def volunteer_work(document: dict, person_id: int, dwh_engine):
     """
     This function inserts volunteer work into the DWH.
 
-    DWH tables: FACT_PRF_Qualification, DIM_PRF_Duration
+    DWH tables: FACT_PRF_Qualification, DIM_PRF_Duration, REL_PRF_Person_Qualification
 
     :param document: The document to convert.
     :param person_id: The ID of the person in the DWH.
@@ -468,17 +484,26 @@ def volunteer_work(document: dict, person_id: int, dwh_engine):
                 duration_id = None
 
             # Convert volunteer to FACT_PRF_Qualification table
-            volunteer_df = conv.volunteer_work(volunteer, person_id, duration_id)
+            volunteer_df = conv.volunteer_work(volunteer, duration_id)
 
             # Insert volunteer data
             volunteer_df.to_sql('FACT_PRF_Qualification', dwh_engine, if_exists='append', index=False)
+
+            # Create a relationship record
+            rel_df = pd.DataFrame([{
+                'idPerson': person_id,
+                'idQualification': pd.read_sql_query("SELECT LAST_INSERT_ID()", dwh_engine).iloc[0, 0]
+            }])
+
+            # Add the relationship record
+            rel_df.to_sql('REL_PRF_Person_Qualification', dwh_engine, if_exists='append', index=False)
 
 
 def certifications(document: dict, person_id: int, dwh_engine):
     """
     This function inserts certifications into the DWH.
 
-    DWH tables: FACT_PRF_Qualification, DIM_PRF_Duration
+    DWH tables: FACT_PRF_Qualification, DIM_PRF_Duration, REL_PRF_Person_Qualification
 
     :param document: The document to convert.
     :param person_id: The ID of the person in the DWH.
@@ -512,178 +537,203 @@ def certifications(document: dict, person_id: int, dwh_engine):
                 duration_id = None
 
             # Convert certification to FACT_PRF_Qualification table
-            certification_df = conv.certification(certification, person_id, duration_id)
+            certification_df = conv.certification(certification, duration_id)
 
             # Insert certification data
             certification_df.to_sql('FACT_PRF_Qualification', dwh_engine, if_exists='append', index=False)
+
+            # Create a relationship record
+            rel_df = pd.DataFrame([{
+                'idPerson': person_id,
+                'idQualification': pd.read_sql_query("SELECT LAST_INSERT_ID()", dwh_engine).iloc[0, 0]
+            }])
+
+            # Add the relationship record
+            rel_df.to_sql('REL_PRF_Person_Qualification', dwh_engine, if_exists='append', index=False)
 
 
 def activities(document: dict, person_id: int, dwh_engine):
     """
     This function inserts activities into the DWH.
 
-    DWH tables: FACT_PRF_Accomplishment
+    DWH tables: FACT_PRF_Accomplishment, REL_PRF_Person_Accomplishment
 
     :param document: The document to convert.
     :param person_id: The ID of the person in the DWH.
     :param dwh_engine: The DWH engine to use.
     """
     if document.get('activities'):
-        df_to_add = document.get('activities', [])
-        data = []
-
-        # Populate list with data
-        for act in df_to_add:
-            data.append({
-                'idPerson': person_id,
+        for act in document.get('activities'):
+            # Create and fill the table
+            activity_df = pd.DataFrame([{
                 'type': 'activity',
                 'name': act.get('title'),
                 'institution': None,
                 'date': None,
                 'description': act.get('activity_status')
-            })
+            }])
 
-        # Create and insert DataFrame
-        if data:
-            pd.DataFrame(data).to_sql('FACT_PRF_Accomplishment', dwh_engine, if_exists='append', index=False)
+            # Insert DataFrame
+            activity_df.to_sql('FACT_PRF_Accomplishment', dwh_engine, if_exists='append', index=False)
+
+            # Create a relationship record
+            rel_df = pd.DataFrame([{
+                'idPerson': person_id,
+                'idAccomplishment': pd.read_sql_query("SELECT LAST_INSERT_ID()", dwh_engine).iloc[0, 0]
+            }])
+
+            # Add the relationship record
+            rel_df.to_sql('REL_PRF_Person_Accomplishment', dwh_engine, if_exists='append', index=False)
 
 
 def articles(document: dict, person_id: int, dwh_engine):
     """
     This function inserts articles into the DWH.
 
-    DWH tables: FACT_PRF_Accomplishment
+    DWH tables: FACT_PRF_Accomplishment, REL_PRF_Person_Accomplishment
 
     :param document: The document to convert.
     :param person_id: The ID of the person in the DWH.
     :param dwh_engine: The DWH engine to use.
     """
     if document.get('articles'):
-        df_to_add = document.get('articles', [])
-        data = []
-
-        # Populate list with data
-        for art in df_to_add:
-            data.append({
-                'idPerson': person_id,
+        for art in document.get('articles'):
+            # Create and fill the table
+            article_df = pd.DataFrame([{
                 'type': 'article',
                 'name': art.get('title'),
                 'institution': art.get('author'),
                 'date': conv.convert_date(art.get('published_date')),
                 'description': art.get('link')
-            })
+            }])
 
-        # Create and insert DataFrame
-        if data:
-            pd.DataFrame(data).to_sql('FACT_PRF_Accomplishment', dwh_engine, if_exists='append', index=False)
+            # Insert DataFrame
+            article_df.to_sql('FACT_PRF_Accomplishment', dwh_engine, if_exists='append', index=False)
+
+            # Create a relationship record
+            rel_df = pd.DataFrame([{
+                'idPerson': person_id,
+                'idAccomplishment': pd.read_sql_query("SELECT LAST_INSERT_ID()", dwh_engine).iloc[0, 0]
+            }])
+
+            # Add the relationship record
+            rel_df.to_sql('REL_PRF_Person_Accomplishment', dwh_engine, if_exists='append', index=False)
 
 
 def accomplishment_organisations(document: dict, person_id: int, dwh_engine):
     """
     This function inserts accomplishment organisations into the DWH.
 
-    DWH tables: FACT_PRF_Accomplishment
+    DWH tables: FACT_PRF_Accomplishment, REL_PRF_Person_Accomplishment
 
     :param document: The document to convert.
     :param person_id: The ID of the person in the DWH.
     :param dwh_engine: The DWH engine to use.
     """
     if document.get('accomplishment_organisations'):
-        df_to_add = document.get('accomplishment_organisations', [])
-        data = []
-
-        # Populate list with data
-        for org in df_to_add:
-            data.append({
-                'idPerson': person_id,
+        for org in document.get('accomplishment_organisations'):
+            # Create and fill the table
+            org_df = pd.DataFrame([{
                 'type': 'organisation',
                 'name': org.get('title'),
                 'institution': org.get('org_name'),
                 'date': conv.convert_date(org.get('starts_at')),
                 'description': org.get('description')
-            })
+            }])
 
-        # Create and insert DataFrame
-        if data:
-            pd.DataFrame(data).to_sql('FACT_PRF_Accomplishment', dwh_engine, if_exists='append', index=False)
+            # Insert DataFrame
+            org_df.to_sql('FACT_PRF_Accomplishment', dwh_engine, if_exists='append', index=False)
+
+            # Create a relationship record
+            rel_df = pd.DataFrame([{
+                'idPerson': person_id,
+                'idAccomplishment': pd.read_sql_query("SELECT LAST_INSERT_ID()", dwh_engine).iloc[0, 0]
+            }])
+
+            # Add the relationship record
+            rel_df.to_sql('REL_PRF_Person_Accomplishment', dwh_engine, if_exists='append', index=False)
 
 
 def accomplishment_publications(document: dict, person_id: int, dwh_engine):
     """
     This function inserts accomplishment publications into the DWH.
 
-    DWH tables: FACT_PRF_Accomplishment
+    DWH tables: FACT_PRF_Accomplishment, REL_PRF_Person_Accomplishment
 
     :param document: The document to convert.
     :param person_id: The ID of the person in the DWH.
     :param dwh_engine: The DWH engine to use.
     """
     if document.get('accomplishment_publications'):
-        df_to_add = document.get('accomplishment_publications', [])
-        data = []
-
-        # Populate list with data
-        for pub in df_to_add:
-            data.append({
-                'idPerson': person_id,
+        for pub in document.get('accomplishment_publications'):
+            # Create and fill the table
+            pub_df = pd.DataFrame([{
                 'type': 'publication',
                 'name': pub.get('name'),
                 'institution': pub.get('publisher'),
                 'date': conv.convert_date(pub.get('published_on')),
                 'description': pub.get('description')
-            })
+            }])
 
-        # Create and insert DataFrame
-        if data:
-            pd.DataFrame(data).to_sql('FACT_PRF_Accomplishment', dwh_engine, if_exists='append', index=False)
+            # Insert DataFrame
+            pub_df.to_sql('FACT_PRF_Accomplishment', dwh_engine, if_exists='append', index=False)
+
+            # Create a relationship record
+            rel_df = pd.DataFrame([{
+                'idPerson': person_id,
+                'idAccomplishment': pd.read_sql_query("SELECT LAST_INSERT_ID()", dwh_engine).iloc[0, 0]
+            }])
+
+            # Add the relationship record
+            rel_df.to_sql('REL_PRF_Person_Accomplishment', dwh_engine, if_exists='append', index=False)
 
 
 def accomplishment_honors_awards(document: dict, person_id: int, dwh_engine):
     """
     This function inserts accomplishment honor awards into the DWH.
 
-    DWH tables: FACT_PRF_Accomplishment
+    DWH tables: FACT_PRF_Accomplishment, REL_PRF_Person_Accomplishment
 
     :param document: The document to convert.
     :param person_id: The ID of the person in the DWH.
     :param dwh_engine: The DWH engine to use.
     """
     if document.get('accomplishment_honors_awards'):
-        df_to_add = document.get('accomplishment_honors_awards', [])
-        data = []
-
-        # Populate list with data
-        for hon in df_to_add:
-            data.append({
-                'idPerson': person_id,
+        for hon in document.get('accomplishment_honors_awards'):
+            # Create and fill the table
+            hon_df = pd.DataFrame([{
                 'type': 'honor',
                 'name': hon.get('title'),
                 'institution': hon.get('issuer'),
                 'date': conv.convert_date(hon.get('issued_on')),
                 'description': hon.get('description')
-            })
+            }])
 
-        # Create and insert DataFrame
-        if data:
-            pd.DataFrame(data).to_sql('FACT_PRF_Accomplishment', dwh_engine, if_exists='append', index=False)
+            # Insert DataFrame
+            hon_df.to_sql('FACT_PRF_Accomplishment', dwh_engine, if_exists='append', index=False)
+
+            # Create a relationship record
+            rel_df = pd.DataFrame([{
+                'idPerson': person_id,
+                'idAccomplishment': pd.read_sql_query("SELECT LAST_INSERT_ID()", dwh_engine).iloc[0, 0]
+            }])
+
+            # Add the relationship record
+            rel_df.to_sql('REL_PRF_Person_Accomplishment', dwh_engine, if_exists='append', index=False)
 
 
 def accomplishment_patents(document: dict, person_id: int, dwh_engine):
     """
     This function inserts accomplishment patents into the DWH.
 
-    DWH tables: FACT_PRF_Accomplishment
+    DWH tables: FACT_PRF_Accomplishment, REL_PRF_Person_Accomplishment
 
     :param document: The document to convert.
     :param person_id: The ID of the person in the DWH.
     :param dwh_engine: The DWH engine to use.
     """
     if document.get('accomplishment_patents'):
-        df_to_add = document.get('accomplishment_patents', [])
-        data = []
-
-        # Populate list with data
-        for pat in df_to_add:
+        for pat in document.get('accomplishment_patents'):
             # Get the variables
             application_number = pat.get('application_number', None)
             patent_number = pat.get('patent_number', None)
@@ -713,85 +763,101 @@ def accomplishment_patents(document: dict, person_id: int, dwh_engine):
                     # If all are available, combine all three
                     comb_description = f"{application_number} | {patent_number} | {patent_description}"
 
-            data.append({
-                'idPerson': person_id,
+            # Create and fill the table
+            pat_df = pd.DataFrame([{
                 'type': 'patent',
                 'name': pat.get('title'),
                 'institution': pat.get('issuer'),
                 'date': conv.convert_date(pat.get('issued_on')),
                 'description': comb_description
-            })
+            }])
 
-        # Create and insert DataFrame
-        if data:
-            pd.DataFrame(data).to_sql('FACT_PRF_Accomplishment', dwh_engine, if_exists='append', index=False)
+            # Insert DataFrame
+            pat_df.to_sql('FACT_PRF_Accomplishment', dwh_engine, if_exists='append', index=False)
+
+            # Create a relationship record
+            rel_df = pd.DataFrame([{
+                'idPerson': person_id,
+                'idAccomplishment': pd.read_sql_query("SELECT LAST_INSERT_ID()", dwh_engine).iloc[0, 0]
+            }])
+
+            # Add the relationship record
+            rel_df.to_sql('REL_PRF_Person_Accomplishment', dwh_engine, if_exists='append', index=False)
 
 
 def accomplishment_test_scores(document: dict, person_id: int, dwh_engine):
     """
     This function inserts accomplishment test scores into the DWH.
 
-    DWH tables: FACT_PRF_Accomplishment
+    DWH tables: FACT_PRF_Accomplishment, REL_PRF_Person_Accomplishment
 
     :param document: The document to convert.
     :param person_id: The ID of the person in the DWH.
     :param dwh_engine: The DWH engine to use.
     """
     if document.get('accomplishment_test_scores'):
-        df_to_add = document.get('accomplishment_test_scores', [])
-        data = []
-
-        # Populate list with data
-        for tst in df_to_add:
-            data.append({
-                'idPerson': person_id,
+        for tst in document.get('accomplishment_test_scores'):
+            # Create and fill the table
+            tst_df = pd.DataFrame([{
                 'type': 'test',
                 'name': tst.get('name'),
                 'institution': tst.get('score'),
                 'date': conv.convert_date(tst.get('date_on')),
                 'description': tst.get('description')
-            })
+            }])
 
-        # Create and insert DataFrame
-        if data:
-            pd.DataFrame(data).to_sql('FACT_PRF_Accomplishment', dwh_engine, if_exists='append', index=False)
+            # Insert DataFrame
+            tst_df.to_sql('FACT_PRF_Accomplishment', dwh_engine, if_exists='append', index=False)
+
+            # Create a relationship record
+            rel_df = pd.DataFrame([{
+                'idPerson': person_id,
+                'idAccomplishment': pd.read_sql_query("SELECT LAST_INSERT_ID()", dwh_engine).iloc[0, 0]
+            }])
+
+            # Add the relationship record
+            rel_df.to_sql('REL_PRF_Person_Accomplishment', dwh_engine, if_exists='append', index=False)
 
 
 def accomplishment_courses(document: dict, person_id: int, dwh_engine):
     """
     This function inserts accomplishment courses into the DWH.
 
-    DWH tables: FACT_PRF_Accomplishment
+    DWH tables: FACT_PRF_Accomplishment, REL_PRF_Person_Accomplishment
 
     :param document: The document to convert.
     :param person_id: The ID of the person in the DWH.
     :param dwh_engine: The DWH engine to use.
     """
     if document.get('accomplishment_courses'):
-        df_to_add = document.get('accomplishment_courses', [])
-        data = []
-
-        # Populate list with data
-        for crs in df_to_add:
-            data.append({
-                'idPerson': person_id,
+        for crs in document.get('accomplishment_courses'):
+            # Create and fill the table
+            crs_df = pd.DataFrame([{
                 'type': 'course',
                 'name': crs.get('name'),
                 'institution': crs.get('number'),
                 'date': None,
                 'description': None
-            })
+            }])
 
-        # Create and insert DataFrame
-        if data:
-            pd.DataFrame(data).to_sql('FACT_PRF_Accomplishment', dwh_engine, if_exists='append', index=False)
+            # Insert DataFrame
+            crs_df.to_sql('FACT_PRF_Accomplishment', dwh_engine, if_exists='append', index=False)
+
+            # Create a relationship record
+            rel_df = pd.DataFrame([{
+                'idPerson': person_id,
+                'idAccomplishment': pd.read_sql_query("SELECT LAST_INSERT_ID()", dwh_engine).iloc[0, 0]
+            }])
+
+            # Add the relationship record
+            rel_df.to_sql('REL_PRF_Person_Accomplishment', dwh_engine, if_exists='append', index=False)
 
 
 def accomplishment_projects(document: dict, person_id: int, dwh_engine):
     """
     This function inserts accomplishment projects into the DWH.
 
-    DWH tables: FACT_PRF_Qualification
+    DWH tables: FACT_PRF_Qualification, DIM_PRF_Duration, REL_PRF_Person_Qualification
 
     :param document: The document to convert.
     :param person_id: The ID of the person in the DWH.
@@ -825,7 +891,16 @@ def accomplishment_projects(document: dict, person_id: int, dwh_engine):
                 duration_id = None
 
             # Convert accomplishment_projects to FACT_PRF_Qualification table
-            project_df = conv.accomplishment_projects(project, person_id, duration_id)
+            project_df = conv.accomplishment_projects(project, duration_id)
 
             # Insert certification data
             project_df.to_sql('FACT_PRF_Qualification', dwh_engine, if_exists='append', index=False)
+
+            # Create a relationship record
+            rel_df = pd.DataFrame([{
+                'idPerson': person_id,
+                'idQualification': pd.read_sql_query("SELECT LAST_INSERT_ID()", dwh_engine).iloc[0, 0]
+            }])
+
+            # Add the relationship record
+            rel_df.to_sql('REL_PRF_Person_Qualification', dwh_engine, if_exists='append', index=False)
