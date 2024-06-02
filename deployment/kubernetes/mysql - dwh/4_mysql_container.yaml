@@ -16,22 +16,23 @@ spec:
     spec:
       containers:
       - name: mysql
-        image: mysql:5.7
-        resources:
-          requests:
-            memory: "2Gi"
-            cpu: "500m"
-          limits:
-            memory: "4Gi"
-            cpu: "1000m"
+        image: mysql:latest
+        # Resources are now managed by the VPA
+        #resources:
+        #  requests:
+        #    memory: "3Gi"
+        #    cpu: "250m"
+        #  limits:
+        #    memory: "4Gi"
+        #    cpu: "1000m"
         env:
         - name: MYSQL_ROOT_PASSWORD
-          value: "DB_ROOT_PASSWORD_GOES_IN_HERE"
+          value: "PASSWORD_GOES_HERE"
         ports:
         - containerPort: 3306
           name: mysql
         args:
-          - "--innodb-buffer-pool-size=3G"
+          # - "--innodb-buffer-pool-size=3G" 
           - "--ssl-ca=/mysql-certs/ca.pem"
           - "--ssl-cert=/mysql-certs/server-cert.pem"
           - "--ssl-key=/mysql-certs/server-key.pem"

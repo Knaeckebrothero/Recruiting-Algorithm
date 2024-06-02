@@ -11,35 +11,71 @@
 
 ## Usage
 
-### References
+- The server restart ist scheduled at 07:00 am ect.
+- If you encounter performance issues you can check the server status by accessing the grafana dashboard.
+- The DWH consists of two main components
+    - A document oriented nosql db for mass storage of raw data (mongodb)
+    - A sql db for more in depth analysis (mysql)
 
-- [API](https://docs.google.com/spreadsheets/d/1itYdtVbfjQgLpScrXZugvm9qUZenOuqP/edit?usp=sharing&ouid=112245649497495850593&rtpof=true&sd=true)
-- [Frontend](https://university-projekt.vercel.app/)
-- [Server](109.91.181.97)
 
-### Data warehouse
+### Data Warehouse - SQL
 
-#### Get a Compatible SQL Client
-You can download MySQL Workbench here:<br>
-[https://dev.mysql.com/downloads/workbench/](https://dev.mysql.com/downloads/workbench/)
+1. Get a Compatible SQL Client<br>
+You can download MySQL Workbench [here](https://dev.mysql.com/downloads/workbench/).
 
-#### Setup the Connection to the DWH
-You can use the following credentials to connect to the DWH:
-- Connection Method: TCP/IP
-- Hostname: [IP](109.91.181.97)
-- Port: 31749
-- Username: root
-- Password: [Password](4fAXg!jq@2&8B986hAU@J#T)
+2. Setup the Connection to the DWH<br>
+    You can use these credentials to connect to the DWH:
+    - Connection Method: TCP/IP
+    - Hostname (aka IP Address)
+    - Port
+    - Username
+    - Password
 
-#### Setup SSL to Encrypt Traffic Between You and the Database
-1. Set "Use SSL" to "Require and Verify CA".
-2. Save the files from the repository deployment/encryption/ssl/ and specify them as follows:
-    - SSL Key: client-key.pem
-    - SSL CERT: client-cert.pem
-    - SSL CA: ca.pem
+3. Setup SSL to Encrypt Traffic Between You and the Database (Optional)<br>
+    - Set "Use SSL" to "Require and Verify CA".
+    - Save the ssl files and specify them as follows:
+        - SSL Key: client-key.pem
+        - SSL CERT: client-cert.pem
+        - SSL CA: ca.pem
+    
+    **Note:** You may generate your own certificate if desired. If you wish to do so, please reach out to me to get it signed.
 
-#### Test the Connection and Close the Window
-**Note:** You may generate your own certificate if desired. If you wish to do so, please reach out to me to get it signed.
+4. Test the Connection and Close the Window<br>
+
+
+### Data Warehouse - MongoDB
+
+1. Get a Compatible MongoDB Client<br>
+You can download MongoDB Compass [here](https://www.mongodb.com/try/download/compass).
+
+2. Setup the Connection to the DWH<br>
+    You can use these credentials to connect to the MongoDB:
+    - Connection Method: TCP/IP
+    - Hostname (aka IP Address)
+    - Port
+
+
+### Data Warehouse - Power BI
+
+1. Download and install Power BI Desktop (rip mac users)
+    You can get Power BI Desktop [here](https://www.microsoft.com/en-us/download/details.aspx?id=58494).
+
+
+### Data Warehouse - Notebook
+
+1. Locate the Example<br>
+    - Clone the repository
+    - You can find a jupyter notebook example with preconfigured connection [here](/dwh/examples/dwh_example.ipynb).    
+
+2. Configure the environment variables<br>
+    - In order to use the notebook you need to setup the .env file.
+    - Clone the repo
+    - Open the [.env.example](.env.example) file
+    - Fill in the your credentials
+    - Remove .example to enable the file
+
+3. Execute the first code cell and use the factions to get a connecter.
+
 
 ### Backend (development)
 1. Clone repo
