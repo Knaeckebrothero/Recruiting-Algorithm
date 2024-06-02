@@ -1,19 +1,44 @@
+name: Build and Deploy
 on:
   push:
-    branches: [ "main", "*", "*/*" ]
-  pull_request:
-    types: [opened, synchronize, reopened]
-    branches: [ "main", "*", "*/*" ]
-
-permissions:
-  contents: read
-  pull-requests: write
+    branches:
+      - develop
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Build
-      run: |
-        echo "Add your build steps here"
+      - name: Checkout Main
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "lts/*"
+
+      - name: Install Dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Build
+        working-directory: ./frontend
+        run: npm run build
+
+      - name: Checkout GitHub Pages Branch
+        uses: actions/checkout@v2
+        with:
+          ref: gh-pages
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          path: ./frontend/gh-pages
+
+      - name: Copy Build to GitHub Pages Branch
+        working-directory: ./frontend
+        run: |
+          rm -rf gh-pages/*
+          cp -r out/* gh-pages/
+          cd gh-pages
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add .
+          git commit -m "Deploy Next.JS App" || echo "No changes to commit"
+          git push origin gh-pages
