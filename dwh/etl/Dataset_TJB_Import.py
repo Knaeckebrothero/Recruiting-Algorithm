@@ -7,7 +7,7 @@ ssl_config = {
     'cert': './Datasets/client-cert.pem',
     'key': './Datasets/client-key.pem'
 }
-
+"""
 mydb = pymysql.connect(
     host='',
     port=,
@@ -17,7 +17,7 @@ mydb = pymysql.connect(
     ssl_ca = ssl_config['ca'],
     ssl_cert = ssl_config['cert'],
     ssl_key = ssl_config['key'])
-
+"""
 
 #File to upload
 file_name = './Datasets/techjobs_skill.csv'
