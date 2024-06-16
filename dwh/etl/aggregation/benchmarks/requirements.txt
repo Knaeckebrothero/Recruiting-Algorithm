@@ -1,0 +1,7 @@
+# Cuda required for GPU acceleration, you may check for your version: https://pytorch.org/get-started/locally/
+# Depending on your setup, special CUDA driver might be required
+# For example: https://developer.nvidia.com/cuda-downloads (note that this is self requires a c++ compiler)
+torch
+transformers
+pynvml
+# glob2 Provides enhanced file handling capabilities, although not strictly necessary if using standard Python
