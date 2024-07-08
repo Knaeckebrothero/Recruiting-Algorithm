@@ -9,15 +9,28 @@ from generate import generate_attributes
 from postprocess import postprocess_data
 
 
-def connect_to_mongodb():
+def connect_to_mongodb() -> pymongo.MongoClient:
+    """
+    Connect to MongoDB and return the client object.
+
+    :return: MongoDB client object
+    """
     client = pymongo.MongoClient(os.getenv("MONGO_CLIENT_URI"))
     return client
 
 
 def get_total_profile_count(mongo_client, mongo_collection_name):
+    """
+    Get the total number of profiles that have experiences or education data.
+
+    :param mongo_client: MongoDB client object
+    :param mongo_collection_name: Name of the MongoDB collection
+    :return: Total number of profiles
+    """
     db = mongo_client['raw_data']
     collection = db[mongo_collection_name]
 
+    # Query to find profiles with experiences or education data
     query = {
         "$or": [
             {"experiences": {"$exists": True, "$ne": []}},
