@@ -8,6 +8,12 @@ from typing import List, Dict, Any
 
 
 def _clean_text(text: str) -> str | None:
+    """
+    Clean the text by removing extra whitespace and standardizing newlines.
+
+    :param text: Input text
+    :return: Cleaned text
+    """
     if text is None:
         return None
     # Remove extra whitespace and standardize newlines
@@ -15,6 +21,14 @@ def _clean_text(text: str) -> str | None:
 
 
 def _process_entry(entry: Dict[str, Any], prompt: str, attributes: List[str]) -> Dict[str, Any]:
+    """
+    Process an entry by cleaning the text and creating a message list for the model.
+
+    :param entry:
+    :param prompt:
+    :param attributes:
+    :return:
+    """
     cleaned_entry = {attr: _clean_text(entry.get(attr)) for attr in attributes}
 
     # Create the message list for the model

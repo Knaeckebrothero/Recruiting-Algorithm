@@ -51,13 +51,7 @@ def generate_attributes(df: pd.DataFrame, model_path: str, batch_size: int = 4) 
 
 
 def generate_attributes(df: pd.DataFrame) -> pd.DataFrame:
-    # Set system prompt
-    messages = [{
-        "role": "system",
-        "content": },
-        {
-            "role": "user",
-            "content": "Context: " + context + "\n\nTemplate: " + json.dumps(template)}]
+
 
     # Generate a completion
     example_completion = openai_api_client.chat.completions.create(
