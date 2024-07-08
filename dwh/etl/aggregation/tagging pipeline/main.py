@@ -1,14 +1,12 @@
 import os
 import pymongo
 import pandas as pd
-import re
 import json
-import torch
 from bson import ObjectId
 from dotenv import load_dotenv
-from typing import List, Dict, Any
-from transformers import AutoTokenizer, AutoModelForCausalLM
-from typing import List, Dict, Any
+from preprocess import preprocess_data
+from generate import generate_attributes
+from postprocess import postprocess_data
 
 
 def connect_to_mongodb():
@@ -49,89 +47,6 @@ def load_profiles(mongo_client, mongo_collection_name, skip, limit):
 
     profiles = list(collection.find(query, projection).skip(skip).limit(limit))
     return pd.DataFrame(profiles)
-
-
-def preprocess_data(df: pd.DataFrame, experience_prompt: str, education_prompt: str) -> pd.DataFrame:
-    print("Preprocessing data...")
-
-    def clean_text(text: str) -> str:
-        if text is None:
-            return None
-        # Remove extra whitespace and standardize newlines
-        return re.sub(r'\s+', ' ', text.strip())
-
-    def process_entry(entry: Dict[str, Any], prompt: str, attributes: List[str]) -> Dict[str, Any]:
-        cleaned_entry = {attr: clean_text(entry.get(attr)) for attr in attributes}
-
-        # Create the message list for the model
-        messages = [
-            {"role": "system", "content": prompt},
-            {"role": "user", "content": json.dumps(cleaned_entry)}
-        ]
-
-        return {"original": cleaned_entry, "messages": messages}
-
-    def process_experiences(experiences: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        exp_attributes = ['company', 'title', 'description', 'location']
-        return [process_entry(exp, experience_prompt, exp_attributes) for exp in experiences]
-
-    def process_education(education: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        edu_attributes = ['field_of_study', 'degree_name', 'school', 'description']
-        return [process_entry(edu, education_prompt, edu_attributes) for edu in education]
-
-    # Process experiences and education for each profile
-    df['processed_experiences'] = df['experiences'].apply(process_experiences)
-    df['processed_education'] = df['education'].apply(process_education)
-
-    return df
-
-
-def generate_attributes(df: pd.DataFrame, model_path: str, batch_size: int = 4) -> pd.DataFrame:
-    print("Generating attributes...")
-
-    # Load model and tokenizer
-    tokenizer = AutoTokenizer.from_pretrained(model_path)
-    model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.float16, device_map="auto")
-
-    def process_batch(batch: List[Dict[str, Any]]) -> List[str]:
-        # Tokenize and pad the inputs
-        inputs = [item['messages'] for item in batch]
-        tokenized_inputs = tokenizer(inputs, padding=True, truncation=True, return_tensors="pt").to(model.device)
-
-        # Generate outputs
-        with torch.no_grad():
-            outputs = model.generate(
-                **tokenized_inputs,
-                max_new_tokens=150,  # Adjust as needed
-                do_sample=True,
-                temperature=0.7,
-                num_return_sequences=1
-            )
-
-        # Decode outputs
-        decoded_outputs = tokenizer.batch_decode(outputs, skip_special_tokens=True)
-        return decoded_outputs
-
-    def process_experiences(experiences: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        results = []
-        for i in range(0, len(experiences), batch_size):
-            batch = experiences[i:i + batch_size]
-            outputs = process_batch(batch)
-            for exp, output in zip(batch, outputs):
-                results.append({**exp['original'], 'generated_attributes': output})
-        return results
-
-    # Process experiences and education
-    df['processed_experiences'] = df['processed_experiences'].apply(process_experiences)
-    df['processed_education'] = df['processed_education'].apply(process_experiences)
-
-    return df
-
-
-def postprocess_data(df):
-    # TODO: Implement postprocessing logic
-    print("Postprocessing data...")
-    return df
 
 
 def save_results(client, mongo_collection_name, df):
@@ -180,9 +95,11 @@ def main():
         education_prompt = prompts["education"]
 
     try:
+        # Get total number of profiles
         total_profiles = get_total_profile_count(client, mongo_collection_name)
         print(f"Total profiles to process: {total_profiles}")
 
+        # Process profiles in batches
         for skip in range(0, total_profiles, batch_size):
             process_batch(
                 client,
