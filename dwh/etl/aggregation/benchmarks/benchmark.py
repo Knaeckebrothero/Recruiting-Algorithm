@@ -113,7 +113,7 @@ else:
         # You might wanna start a notebook and login there before running this script
         # Use: from huggingface_hub import notebook_login
         # For: notebook_login()
-        "meta-llama/Meta-Llama-3-8B-Instruct",
+        "microsoft/Phi-3-mini-128k-instruct",
         torch_dtype=torch.bfloat16,
         device_map="auto"
     )
@@ -126,8 +126,8 @@ else:
     
     # Process all files
     avg_gpu_utilization, avg_gpu_memory = process_files(
-        'inputs',
-        'outputs',
+        'input',
+        'output',
         model
     )
     
