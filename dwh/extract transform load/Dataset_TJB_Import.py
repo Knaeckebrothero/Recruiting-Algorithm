@@ -1,7 +1,7 @@
 import csv
 import pymysql
 
-#Conncetion with DW
+#Connection with DW
 ssl_config = {
     'ca': './Datasets/ca.pem',
     'cert': './Datasets/client-cert.pem',
@@ -23,7 +23,7 @@ mydb = pymysql.connect(
 file_name = './Datasets/techjobs_skill.csv'
 batch_size = 1000  # Number of rows to insert in each batch
 
-#Create TAble Employees
+#Create different tables in the DW
 create_table_employees = '''CREATE TABLE IF NOT EXISTS DIM_TJB_Employee (
     EmployeeID INT PRIMARY KEY,
     Age VARCHAR(5),
@@ -52,13 +52,14 @@ create_table_relationships = '''CREATE TABLE Fact_EmployeeSkills (
 
 cursor = mydb.cursor()
 
-# #Uncomment to create tables if neccesary
+#Uncomment this code below to create tables if neccesary
 # try:
 #     cursor.execute(create_table_relationships)
 #     mydb.commit()
 # except:
 #     print('Error Occured while creating Table!')
 
+#Start retrieving data from csv file
 with open(file_name, newline='\n') as csvfile:
     csvreader = csv.reader(csvfile, delimiter=',')
     header = next(csvreader)
@@ -67,7 +68,7 @@ with open(file_name, newline='\n') as csvfile:
     non_skill_columns = ['Age', 'EdLevel', 'Employment', 'Gender', 'MainBranch', 'YearsCode', 'Country', 'PreviousSalary', 'ComputerSkills', 'Employed']
     skill_columns = [col for col in header if col not in non_skill_columns]
 
-    # Insert skill names into DIM_TJB_Skills if not exists
+    # Insert skills names into DIM_TJB_Skills if not exists
     skill_ids = {}
     for skill in skill_columns:
         cursor.execute('SELECT SkillID FROM DWH2.DIM_TJB_Skills WHERE SkillName = %s', (skill,))
@@ -80,7 +81,7 @@ with open(file_name, newline='\n') as csvfile:
             skill_id = result[0]
         skill_ids[skill] = skill_id
 
-    # Batch processing
+    # Batch processing to insert employee data efficiently
     batch_data_employee = []
     batch_data_skills = []
     row_number = 0
