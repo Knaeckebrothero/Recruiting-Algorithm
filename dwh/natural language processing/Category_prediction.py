@@ -1,7 +1,3 @@
-# Deploy model and visualizations in streamlit for better understanding
-# Goal is to analyze PDF Resume and PDF Job Requirements to predict role of candidate and generate match percentage between both
-
-#Import necessary libraries
 import streamlit as st
 import pickle
 import spacy
@@ -15,9 +11,7 @@ import pandas as pd
 import seaborn as sns
 import numpy as np
 
-
-# Attempt to load the spaCy model, download it if necessary
-# For better understanding and explanation of the model capabilites refer to file ./dwh/natural lenguage processing/Volltext.ipynb
+# Attempt to load the spaCy model, downloading it if necessary
 try:
     nlp = spacy.load("en_core_web_sm")
 except IOError:
@@ -25,17 +19,13 @@ except IOError:
     spacy.cli.download("en_core_web_sm")
     nlp = spacy.load("en_core_web_sm")
 
-
 # Define the text preprocessing function using spaCy
-# Filters out tokens that are stop words (token.is_stop), punctuation (token.is_punct), or non-alphabetic (token.is_alpha)
-# token.lemma_ = Lemmatization is the process of reducing words to their base or root form (e.g., "running" becomes "run")
 def preprocess_text(text):
     doc = nlp(text)
     clean = [token.lemma_ for token in doc if not token.is_stop and not token.is_punct and token.is_alpha]
     return " ".join(clean)
 
-
-# Load the model pipeline 
+# Load the model pipeline from file
 with open('./Models/model_res.pkl', 'rb') as file:
     model_pipeline = pickle.load(file)
 
@@ -68,13 +58,11 @@ category_mapping = {
     0: "Advocate",
 }
 
-
-# Function to predict the category of a resume using the model above
+# Function to predict the category of a resume
 def predict_category(text):
     cleaned_text = preprocess_text(text)
     prediction_id = model_pipeline.predict([cleaned_text])[0]
     return category_mapping.get(prediction_id, "Unknown")
-
 
 # Function to extract text from a PDF file using pdfplumber
 def extract_text_from_pdf(pdf_file):
@@ -82,32 +70,21 @@ def extract_text_from_pdf(pdf_file):
         pages = pdf.pages[0]
         pdf_text = pages.extract_text()
     return pdf_text
-    
 
-# Function to calculate the similarity between job description and resume
 def getResult(JD_txt, resume_txt):
-    # Combine job description and resume text into a list
     content = [JD_txt, resume_txt]
     cv = CountVectorizer()
-    # Transform the text data into a matrix of token counts
     matrix = cv.fit_transform(content)
-    # Compute cosine similarity between the job description and resume
     similarity_matrix = cosine_similarity(matrix)
-    # Extract the similarity score between the job description and resume
     match = similarity_matrix[0][1] * 100
     return match
 
-
-# Function to plot the term frequency of the most common words in the text
 def plot_term_frequency(text):
     words = text.split()
-    # Count the frequency of each word
     word_freq = Counter(words)
-    # Get the 10 most common words and their frequencies
     most_common_words = word_freq.most_common(10)
     words_df = pd.DataFrame(most_common_words, columns=['Word', 'Frequency'])
-    
-    # Plot the frequencies of the most common words
+
     plt.figure(figsize=(10, 6))
     sns.barplot(x='Frequency', y='Word', data=words_df, palette='viridis')
     plt.title('Top 10 Most Common Words in Resume')
@@ -115,23 +92,18 @@ def plot_term_frequency(text):
     plt.ylabel('Word')
     st.pyplot(plt)
 
-
-# Function to plot the skills match between resume and job description
 def plot_skills_match(resume_text, job_text):
     resume_words = resume_text.split()
     job_words = job_text.split()
 
-    # Count the frequency of each word in resume and job description
     resume_freq = Counter(resume_words)
     job_freq = Counter(job_words)
 
-    # Find common words between resume and job description
     common_words = set(resume_freq.keys()).intersection(set(job_freq.keys()))
-    # Create a list of common words and their frequencies in resume and job description
     common_freq = [(word, resume_freq[word], job_freq[word]) for word in common_words]
+
     words_df = pd.DataFrame(common_freq, columns=['Word', 'Resume_Frequency', 'Job_Frequency'])
 
-    # Plot the frequencies of common words in resume and job description
     plt.figure(figsize=(10, 6))
     sns.barplot(x='Resume_Frequency', y='Word', data=words_df, label='Resume', color='b', alpha=0.6)
     sns.barplot(x='Job_Frequency', y='Word', data=words_df, label='Job', color='g', alpha=0.6)
@@ -141,8 +113,6 @@ def plot_skills_match(resume_text, job_text):
     plt.ylabel('Skill')
     st.pyplot(plt)
 
-
-# Function to plot the timeline of work experience
 def plot_experience_timeline():
     # Example data for experience timeline
     experience_data = {
@@ -152,7 +122,6 @@ def plot_experience_timeline():
     }
     experience_df = pd.DataFrame(experience_data)
 
-    # Plot the timeline of work experience
     fig, ax = plt.subplots(figsize=(10, 6))
     for index, row in experience_df.iterrows():
         ax.plot([row['Start Year'], row['End Year']], [row['Role'], row['Role']], marker='o')
@@ -161,9 +130,7 @@ def plot_experience_timeline():
     ax.set_xlabel('Year')
     ax.set_ylabel('Role')
     st.pyplot(fig)
-    
 
-# Function to plot the timeline of education
 def plot_education_timeline():
     # Example data for education timeline
     education_data = {
@@ -172,7 +139,6 @@ def plot_education_timeline():
     }
     education_df = pd.DataFrame(education_data)
 
-    # Plot the timeline of education
     fig, ax = plt.subplots(figsize=(10, 6))
     ax.barh(education_df['Degree'], education_df['Year'])
     ax.set_title("Timeline of Candidate's Education")
@@ -180,7 +146,6 @@ def plot_education_timeline():
     ax.set_ylabel('Degree')
     st.pyplot(fig)
 
-# Function to plot the profile summary
 def plot_profile_summary():
     # Example data for profile summary
     profile_data = {
@@ -189,14 +154,11 @@ def plot_profile_summary():
     }
     profile_df = pd.DataFrame(profile_data)
 
-    # Plot the profile summary
     fig, ax = plt.subplots()
     sns.barplot(x='Dimension', y='Score', data=profile_df, ax=ax)
     ax.set_title("Profile Summary")
     st.pyplot(fig)
 
-
-# Function to plot a radar chart of the candidate's profile
 def plot_profile_radar_chart():
     # Example data for radar chart
     labels = ['Technical Skills', 'Experience', 'Education', 'Soft Skills']
@@ -205,7 +167,6 @@ def plot_profile_radar_chart():
     scores += scores[:1]
     angles += angles[:1]
 
-    # Plot the radar chart
     fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(polar=True))
     ax.fill(angles, scores, color='red', alpha=0.25)
     ax.plot(angles, scores, color='red', linewidth=2)
@@ -215,29 +176,20 @@ def plot_profile_radar_chart():
     ax.set_title('Candidate Profile Radar Chart')
     st.pyplot(fig)
 
-
 def main():
-
-    # Define streamlit UI
-    st.title("IBIS Project Advanced Resume Screening App", anchor=None)
-    st.markdown('<p class="big-font">Welcome to the Advanced Resume Screening App!</p>', unsafe_allow_html=True)
+    st.title("IBIS/EBIS Project Advanced Resume Screening App", anchor=None)
+    st.markdown('<p class="big-font">Welcome to your Candidate Screening App!</p>', unsafe_allow_html=True)
     st.markdown("## Upload candidates resume and job posting to receive an overview of the candidate:")
-    click = st.button("Process")
 
     # Using columns to layout the file uploader and text box
     col1, col3 = st.columns(2)
 
     with col1:
-        uploaded_file1 = st.file_uploader("Upload Your Resume", type=["txt", "pdf"])
-
-    # Uncomment for manual resume text input 
-    #with col2:
-        #resume_text_manual = st.text_area("Type your resume here:")
+        uploaded_files = st.file_uploader("Upload Resumes", type=["txt", "pdf"], accept_multiple_files=True)
 
     with col3:
         uploaded_file2 = st.file_uploader("Upload Job Posting/Requirement", type=["txt", "pdf"])
-        
-    # Upload PDF files ofr resume and job requirements
+
     job_text = ""
     if uploaded_file2 is not None:
         if uploaded_file2.type == "application/pdf":
@@ -245,29 +197,40 @@ def main():
         elif uploaded_file2.type == "text/plain":
             job_text = uploaded_file2.getvalue().decode("utf-8")
 
-    resume_text = ""
-    if uploaded_file1 is not None:
-        if uploaded_file1.type == "application/pdf":
-            resume_text = extract_text_from_pdf(uploaded_file1)
-        elif uploaded_file1.type == "text/plain":
-            resume_text = uploaded_file1.getvalue().decode("utf-8")
-    #elif resume_text_manual:
-     #   resume_text = resume_text_manual
+    if st.button("Process") and uploaded_files and job_text:
+        results = []
+        for uploaded_file in uploaded_files:
+            resume_text = ""
+            if uploaded_file.type == "application/pdf":
+                resume_text = extract_text_from_pdf(uploaded_file)
+            elif uploaded_file.type == "text/plain":
+                resume_text = uploaded_file.getvalue().decode("utf-8")
 
-    if click and resume_text and job_text:
-        with st.spinner("Analyzing..."):
-            #Predict Job Category
-            category = predict_category(resume_text)
-            st.markdown(f"## Predicted Candidate Category: **{category}**")
+            if resume_text:
+                with st.spinner(f"Analyzing {uploaded_file.name}..."):
+                    # Predict Job Category
+                    category = predict_category(resume_text)
 
-            #Match Job Description with resume
-            match = getResult(job_text, resume_text)
-            match = round(match, 2)
-            st.write(f"## Match Percentage: ", match, "%")
+                    # Match Job Description with resume
+                    match = getResult(job_text, resume_text)
+                    match = round(match, 2)
 
-            st.write(f"## Candidate Analysis")
-            
-            # Generate a word cloud from the cleaned resume text
+                    results.append((uploaded_file.name, match, category, resume_text))
+
+        # Sort results by match percentage
+        results.sort(key=lambda x: x[1], reverse=True)
+
+        # Display results table
+        st.markdown("## Top Candidates")
+        results_df = pd.DataFrame(results, columns=['Candidate', 'Match Percentage', 'Category', 'Resume Text'])
+        st.dataframe(results_df[['Candidate', 'Match Percentage', 'Category']])
+
+        # Display detailed results
+        st.markdown("## Detailed Analysis for each candidate")
+        for name, match, category, resume_text in results:
+            st.markdown(f"### {name}")
+            st.markdown(f"**Predicted Category:** {category}")
+            st.markdown(f"**Match Percentage:** {match}%")
             cleaned_text = preprocess_text(resume_text)
             wordcloud = WordCloud(width=800, height=400, background_color='white').generate(cleaned_text)
             fig, ax = plt.subplots()
@@ -282,6 +245,8 @@ def main():
             plot_profile_summary()
             plot_profile_radar_chart()
 
+            #Preprocessing todo en pequqeno
+            #Timeline con educacion y trabajo al mismo tiempo
 
 if __name__ == "__main__":
     main()
