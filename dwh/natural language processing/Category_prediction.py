@@ -34,10 +34,10 @@ def preprocess_text(text):
     clean = [token.lemma_ for token in doc if not token.is_stop and not token.is_punct and token.is_alpha]
     return " ".join(clean)
 
-
-# Load the model pipeline 
+# Load the model pipeline
 with open('./Models/model_res.pkl', 'rb') as file:
     model_pipeline = pickle.load(file)
+
 
 # Define the category mapping for prediction output
 category_mapping = {
@@ -82,7 +82,7 @@ def extract_text_from_pdf(pdf_file):
         pages = pdf.pages[0]
         pdf_text = pages.extract_text()
     return pdf_text
-    
+
 
 # Function to calculate the similarity between job description and resume
 def getResult(JD_txt, resume_txt):
@@ -106,7 +106,7 @@ def plot_term_frequency(text):
     # Get the 10 most common words and their frequencies
     most_common_words = word_freq.most_common(10)
     words_df = pd.DataFrame(most_common_words, columns=['Word', 'Frequency'])
-    
+
     # Plot the frequencies of the most common words
     plt.figure(figsize=(10, 6))
     sns.barplot(x='Frequency', y='Word', data=words_df, palette='viridis')
@@ -114,7 +114,6 @@ def plot_term_frequency(text):
     plt.xlabel('Frequency')
     plt.ylabel('Word')
     st.pyplot(plt)
-
 
 # Function to plot the skills match between resume and job description
 def plot_skills_match(resume_text, job_text):
@@ -161,7 +160,6 @@ def plot_experience_timeline():
     ax.set_xlabel('Year')
     ax.set_ylabel('Role')
     st.pyplot(fig)
-    
 
 # Function to plot the timeline of education
 def plot_education_timeline():
@@ -179,6 +177,7 @@ def plot_education_timeline():
     ax.set_xlabel('Year')
     ax.set_ylabel('Degree')
     st.pyplot(fig)
+
 
 # Function to plot the profile summary
 def plot_profile_summary():
@@ -215,29 +214,23 @@ def plot_profile_radar_chart():
     ax.set_title('Candidate Profile Radar Chart')
     st.pyplot(fig)
 
-
 def main():
 
     # Define streamlit UI
-    st.title("IBIS Project Advanced Resume Screening App", anchor=None)
-    st.markdown('<p class="big-font">Welcome to the Advanced Resume Screening App!</p>', unsafe_allow_html=True)
+    st.title("IBIS/EBIS Project Advanced Resume Screening App", anchor=None)
+    st.markdown('<p class="big-font">Welcome to your Candidate Screening App!</p>', unsafe_allow_html=True)
     st.markdown("## Upload candidates resume and job posting to receive an overview of the candidate:")
-    click = st.button("Process")
 
     # Using columns to layout the file uploader and text box
     col1, col3 = st.columns(2)
 
     with col1:
-        uploaded_file1 = st.file_uploader("Upload Your Resume", type=["txt", "pdf"])
-
-    # Uncomment for manual resume text input 
-    #with col2:
-        #resume_text_manual = st.text_area("Type your resume here:")
+        uploaded_files = st.file_uploader("Upload Resumes", type=["txt", "pdf"], accept_multiple_files=True)
 
     with col3:
         uploaded_file2 = st.file_uploader("Upload Job Posting/Requirement", type=["txt", "pdf"])
-        
-    # Upload PDF files ofr resume and job requirements
+
+    # Upload PDF files of resumes and job requirements
     job_text = ""
     if uploaded_file2 is not None:
         if uploaded_file2.type == "application/pdf":
@@ -245,29 +238,40 @@ def main():
         elif uploaded_file2.type == "text/plain":
             job_text = uploaded_file2.getvalue().decode("utf-8")
 
-    resume_text = ""
-    if uploaded_file1 is not None:
-        if uploaded_file1.type == "application/pdf":
-            resume_text = extract_text_from_pdf(uploaded_file1)
-        elif uploaded_file1.type == "text/plain":
-            resume_text = uploaded_file1.getvalue().decode("utf-8")
-    #elif resume_text_manual:
-     #   resume_text = resume_text_manual
+    if st.button("Process") and uploaded_files and job_text:
+        results = []
+        for uploaded_file in uploaded_files:
+            resume_text = ""
+            if uploaded_file.type == "application/pdf":
+                resume_text = extract_text_from_pdf(uploaded_file)
+            elif uploaded_file.type == "text/plain":
+                resume_text = uploaded_file.getvalue().decode("utf-8")
 
-    if click and resume_text and job_text:
-        with st.spinner("Analyzing..."):
-            #Predict Job Category
-            category = predict_category(resume_text)
-            st.markdown(f"## Predicted Candidate Category: **{category}**")
+            if resume_text:
+                with st.spinner(f"Analyzing {uploaded_file.name}..."):
+                    # Predict Job Category
+                    category = predict_category(resume_text)
 
-            #Match Job Description with resume
-            match = getResult(job_text, resume_text)
-            match = round(match, 2)
-            st.write(f"## Match Percentage: ", match, "%")
+                    # Match Job Description with resume
+                    match = getResult(job_text, resume_text)
+                    match = round(match, 2)
 
-            st.write(f"## Candidate Analysis")
-            
-            # Generate a word cloud from the cleaned resume text
+                    results.append((uploaded_file.name, match, category, resume_text))
+
+        # Sort results by match percentage
+        results.sort(key=lambda x: x[1], reverse=True)
+
+        # Display results table
+        st.markdown("## Top Candidates")
+        results_df = pd.DataFrame(results, columns=['Candidate', 'Match Percentage', 'Category', 'Resume Text'])
+        st.dataframe(results_df[['Candidate', 'Match Percentage', 'Category']])
+
+        # Display detailed results
+        st.markdown("## Detailed Analysis for each candidate")
+        for name, match, category, resume_text in results:
+            st.markdown(f"### {name}")
+            st.markdown(f"**Predicted Category:** {category}")
+            st.markdown(f"**Match Percentage:** {match}%")
             cleaned_text = preprocess_text(resume_text)
             wordcloud = WordCloud(width=800, height=400, background_color='white').generate(cleaned_text)
             fig, ax = plt.subplots()
@@ -281,7 +285,6 @@ def main():
             plot_education_timeline()
             plot_profile_summary()
             plot_profile_radar_chart()
-
 
 if __name__ == "__main__":
     main()
