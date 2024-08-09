@@ -1,0 +1,13 @@
+torch
+torchvision
+torchaudio
+transformers
+pandas
+numpy
+
+pymongo
+langchain
+chromadb
+# pip install flash-attn
+# pip install accelerate
+# https://github.com/langflow-ai/langflow?tab=readme-ov-file#-get-started
