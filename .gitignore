@@ -1,5 +1,7 @@
 # Projecspecific contents go here
 
+# Virtualenv
+venv/
 
 # Local environment
 .env
