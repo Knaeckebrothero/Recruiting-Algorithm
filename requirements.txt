@@ -1,3 +1,4 @@
+# ML Requirements
 torch
 torchvision
 torchaudio
@@ -5,9 +6,13 @@ transformers
 pandas
 numpy
 
+# DB Requirements
 pymongo
-langchain
 chromadb
+
+# NLP Requirements
+langchain
 # pip install flash-attn
-# pip install accelerate
+# pip install accelerate  # For Llama
+# pip install sentencepiece  # For Mistral Tokenizer
 # https://github.com/langflow-ai/langflow?tab=readme-ov-file#-get-started
