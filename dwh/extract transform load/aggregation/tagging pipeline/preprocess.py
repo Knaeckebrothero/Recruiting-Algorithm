@@ -4,6 +4,7 @@ This module contains functions to preprocess the data for the tagging pipeline.
 import json
 import re
 import pandas as pd
+import logging
 from typing import List, Dict, Any
 
 
@@ -51,7 +52,7 @@ def _process_education(education: List[Dict[str, Any]], prompt: str) -> List[Dic
 
 
 def preprocess_data(df: pd.DataFrame, experience_prompt: str, education_prompt: str) -> pd.DataFrame:
-    print("Preprocessing data...")
+    logging.debug("Preprocessing data...")
 
     # Process experiences and education for each profile
     df['processed_experiences'] = df['experiences'].apply(_process_experiences(prompt=experience_prompt))
