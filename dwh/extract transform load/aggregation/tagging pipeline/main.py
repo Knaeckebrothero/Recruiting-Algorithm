@@ -1,23 +1,68 @@
+"""
+This script holds the main function for the tagging pipeline.
+"""
 import os
 import pymongo
 import pandas as pd
 import json
 import logging
+from dotenv import load_dotenv, find_dotenv
 from bson import ObjectId
-from dotenv import load_dotenv
+
 from preprocess import preprocess_data
 from generate import generate_attributes
 from postprocess import postprocess_data
 
 
-def connect_to_mongodb() -> pymongo.MongoClient:
+def configure_custom_logger(
+        module_name: str,  # = __name__,
+        console_level: int = 20,
+        file_level: int = 20,
+        logging_format: str = '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        logging_directory: str | None = None,
+        separate_log_file: bool = False
+        ) -> logging.Logger:
     """
-    Connect to MongoDB and return the client object.
+    This function configures a custom logger for printing and saving logs in a logfile.
 
-    :return: MongoDB client object
+    :param module_name: Name for the logging module, could be __name__ or a custom name.
+    :param console_level: The logging level for logging in the console.
+    :param file_level: The logging level for logging in the logfile.
+    :param logging_format: Format used for logging.
+    :param logging_directory: Path for the directory where the log files should be saved to.
+    :param separate_log_file: If True, a separate log file will be created for this logger.
+
+    :return: A configured logger object.
     """
-    client = pymongo.MongoClient(os.getenv("MONGO_CLIENT_URI"))
-    return client
+    logger = logging.getLogger(logging.getLoggerClass().root.name + "." + module_name)
+    logger.setLevel(logging.DEBUG)
+    formatter = logging.Formatter(logging_format)
+
+    # Set and create the logging directory if it does not exist
+    if logging_directory is None:
+        logging_directory = './config/logs/'
+    if not os.path.exists(logging_directory):
+        os.makedirs(logging_directory)
+
+    # File handler for writing logs to a file
+    if separate_log_file:
+        file_handler = logging.FileHandler(logging_directory + module_name + '.log')
+    else:
+        file_handler = logging.FileHandler(logging_directory + 'main_log.log')
+
+    file_handler.setFormatter(formatter)
+    file_handler.setLevel(file_level)
+    logger.addHandler(file_handler)
+
+    # TODO: Store logs in database log level
+
+    # Console (stream) handler
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    console_handler.setLevel(console_level)
+    logger.addHandler(console_handler)
+
+    return logger
 
 
 def get_total_profile_count(mongo_client, mongo_collection_name, database):
@@ -130,48 +175,39 @@ def process_batch(client, collection_name_data, collection_name_result, skip,
 
 # Main function
 if __name__ == "__main__":
-    # Set logging configuration
-    logging.basicConfig(level=logging.INFO)
-    logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
-    logging.basicConfig(filename='tagging_pipeline.log', level=logging.INFO)
-
-    # Load environment variables
-    load_dotenv()
+    load_dotenv(find_dotenv())
+    log = configure_custom_logger(module_name=__name__)
+    log.info("Environment variables loaded, logger initialized.")
 
     # Connect to MongoDB
-    client = connect_to_mongodb()
+    log.info("Connecting to MongoDB...")
+    mongodb_client = pymongo.MongoClient(os.getenv('MONGO_CLIENT_URI'))
 
     # Define constants
-    mongo_collection_name = 'test'
-    mongo_database_name = 'data'
-    batch_size = 1
-
-    # Load prompts
-    with open("prompts.json") as f:
-        prompts = json.load(f)
-        experience_prompt = prompts["experience"]
-        education_prompt = prompts["education"]
+    collection_name = os.getenv('MONGO_COLLECTION_NAME')
+    database_name = os.getenv('MONGO_DATABASE_NAME')
+    batch_size = os.getenv('BATCH_SIZE')
 
     try:
         # Get total number of profiles
-        total_profiles = get_total_profile_count(
-            client, mongo_collection_name, mongo_database_name)
-        logging.info(f"Total profiles to process: {total_profiles}")
+        total_profiles = get_total_profile_count(mongodb_client, collection_name, database_name)
+        log.info(f"Total profiles to process: {total_profiles}")
 
         # Process profiles in batches
         for skip in range(0, total_profiles, batch_size):
             process_batch(
-                client=client,
-                collection_name_data=mongo_collection_name,
-                collection_name_result=mongo_collection_name + "_processed",
+                client=mongodb_client,
+                collection_name_data=collection_name,
+                collection_name_result=collection_name + "_processed",
                 skip=skip,
                 limit=batch_size,
-                experience_prompt=experience_prompt,
-                education_prompt=education_prompt,
-                database=mongo_database_name
+                database=database_name
             )
 
-        logging.info("All batches processed successfully")
+        log.info("All batches processed successfully")
 
     finally:
-        client.close()
+        # Close MongoDB connection
+        log.info("Closing MongoDB connection...")
+        mongodb_client.close()
+        log.info("MongoDB connection closed, finished execution.")

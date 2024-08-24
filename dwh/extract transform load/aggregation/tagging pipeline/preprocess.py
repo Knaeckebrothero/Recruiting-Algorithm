@@ -25,10 +25,11 @@ def _process_entry(entry: Dict[str, Any], prompt: str, attributes: List[str]) ->
     """
     Process an entry by cleaning the text and creating a message list for the model.
 
-    :param entry:
-    :param prompt:
-    :param attributes:
-    :return:
+    :param entry: Entry to process (e.g. experience, education)
+    :param prompt: System prompt for the model
+    :param attributes: List of attributes to include in the message list
+
+    :return: Processed entry with original data and message list
     """
     cleaned_entry = {attr: _clean_text(entry.get(attr)) for attr in attributes}
 
@@ -42,6 +43,16 @@ def _process_entry(entry: Dict[str, Any], prompt: str, attributes: List[str]) ->
 
 
 def _process_experiences(experiences: List[Dict[str, Any]], prompt: str) -> List[Dict[str, Any]]:
+    """
+    Process experiences for each profile.
+
+    :param experiences:
+    :type experiences:
+    :param prompt:
+    :type prompt:
+    :return:
+    :rtype:
+    """
     exp_attributes = ['company', 'title', 'description', 'location']
     return [_process_entry(exp, prompt, exp_attributes) for exp in experiences]
 
@@ -52,6 +63,14 @@ def _process_education(education: List[Dict[str, Any]], prompt: str) -> List[Dic
 
 
 def preprocess_data(df: pd.DataFrame, experience_prompt: str, education_prompt: str) -> pd.DataFrame:
+    """
+    Preprocess the data by cleaning the text and creating the message list for each profile.
+
+    :param df:
+    :param experience_prompt:
+    :param education_prompt:
+    :return:
+    """
     logging.debug("Preprocessing data...")
 
     # Process experiences and education for each profile

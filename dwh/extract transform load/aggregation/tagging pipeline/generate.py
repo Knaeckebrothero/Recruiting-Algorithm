@@ -47,7 +47,7 @@ def generate_attributes(df: pd.DataFrame, model_path: str, batch_size: int = 4) 
     df['processed_education'] = df['processed_education'].apply(process_experiences)
 
     return df
-"""
+
 
 
 def generate_attributes(df: pd.DataFrame) -> pd.DataFrame:
@@ -96,3 +96,10 @@ def generate_attributes(df: pd.DataFrame) -> pd.DataFrame:
     df['processed_education'] = df['processed_education'].apply(process_experiences)
 
     return df
+
+    # Load prompts
+    with open("prompts.json") as f:
+        prompts = json.load(f)
+        experience_prompt = prompts["experience"]
+        education_prompt = prompts["education"]
+"""
