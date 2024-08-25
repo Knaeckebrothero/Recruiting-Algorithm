@@ -62,14 +62,9 @@ def _process_education(education: List[Dict[str, Any]], prompt: str) -> List[Dic
     return [_process_entry(edu, prompt, edu_attributes) for edu in education]
 
 
-def preprocess_data(df: pd.DataFrame, experience_prompt: str, education_prompt: str) -> pd.DataFrame:
+def preprocess_data():
     """
     Preprocess the data by cleaning the text and creating the message list for each profile.
-
-    :param df:
-    :param experience_prompt:
-    :param education_prompt:
-    :return:
     """
     logging.debug("Preprocessing data...")
 

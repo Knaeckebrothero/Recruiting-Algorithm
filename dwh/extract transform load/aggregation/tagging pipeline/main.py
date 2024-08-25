@@ -9,9 +9,11 @@ import logging
 from dotenv import load_dotenv, find_dotenv
 from bson import ObjectId
 
+"""
 from preprocess import preprocess_data
 from generate import generate_attributes
 from postprocess import postprocess_data
+"""
 
 
 def configure_custom_logger(
@@ -21,7 +23,7 @@ def configure_custom_logger(
         logging_format: str = '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         logging_directory: str | None = None,
         separate_log_file: bool = False
-        ) -> logging.Logger:
+) -> logging.Logger:
     """
     This function configures a custom logger for printing and saving logs in a logfile.
 
@@ -40,7 +42,7 @@ def configure_custom_logger(
 
     # Set and create the logging directory if it does not exist
     if logging_directory is None:
-        logging_directory = './config/logs/'
+        logging_directory = './logs/'
     if not os.path.exists(logging_directory):
         os.makedirs(logging_directory)
 
@@ -54,8 +56,6 @@ def configure_custom_logger(
     file_handler.setLevel(file_level)
     logger.addHandler(file_handler)
 
-    # TODO: Store logs in database log level
-
     # Console (stream) handler
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
@@ -65,13 +65,14 @@ def configure_custom_logger(
     return logger
 
 
-def get_total_profile_count(mongo_client, mongo_collection_name, database):
+def get_total_profile_count(mongo_client, mongo_collection_name, database, mongo_query=None):
     """
     Get the total number of profiles that have experiences or education data.
 
     :param mongo_client: MongoDB client object
     :param mongo_collection_name: Name of the MongoDB collection
     :param database: Name of the MongoDB database
+    :param mongo_query: Optional query to filter profiles
 
     :return: Total number of profiles
     """
@@ -79,30 +80,82 @@ def get_total_profile_count(mongo_client, mongo_collection_name, database):
     collection = db[mongo_collection_name]
 
     # Query to find profiles with experiences or education data
-    query = {
-        "$or": [
-            {"experiences": {"$exists": True, "$ne": []}},
-            {"education": {"$exists": True, "$ne": []}}
-        ]
-    }
-
-    return collection.count_documents(query)
+    if not mongo_query:
+        return collection.count_documents({})
+    else:
+        return collection.count_documents(mongo_query)
 
 
-def load_profiles(mongo_client, mongo_collection_name, skip, limit, database):
+def load_profiles(
+        mongo_client, mongo_collection_name, profiles_to_skip, limit, database,
+        mongo_query=None, mongo_projection=None):
     """
     Load profiles that have experiences or education data from the MongoDB collection.
 
     :param mongo_client: MongoDB client object
     :param mongo_collection_name: Name of the MongoDB collection
-    :param skip: Number of profiles to skip
+    :param profiles_to_skip: Number of profiles to skip
     :param limit: Maximum number of profiles to load
     :param database: Name of the MongoDB database
+    :param mongo_query: Optional query to filter profiles
+    :param mongo_projection: Optional projection to include only necessary fields
 
     :return: DataFrame containing the loaded profiles
     """
+    if mongo_projection is None:
+        mongo_projection = {}
+    if mongo_query is None:
+        mongo_query = {}
+
     db = mongo_client[database]
     collection = db[mongo_collection_name]
+
+    # Load profiles using the query, projection, skip, and limit
+    profiles = list(collection.find(mongo_query, mongo_projection).skip(profiles_to_skip).limit(limit))
+
+    # Convert the results to a DataFrame
+
+
+
+    return pd.DataFrame(profiles)
+
+
+def save_results(client, mongo_collection_name, dataframe, database):
+    """
+    Save the processed results to the MongoDB collection.
+
+    :param client: MongoDB client object
+    :param mongo_collection_name: Name of the MongoDB collection
+    :param dataframe: DataFrame containing the processed results
+    :param database: Name of the MongoDB database
+    """
+    db = client[database]
+    collection = db[mongo_collection_name]
+    results = dataframe.to_dict('records')
+
+    for result in results:
+        # Ensure _id is an ObjectId
+        if not isinstance(result['_id'], ObjectId):
+            result['_id'] = ObjectId(result['_id'])
+
+        # Insert the document, or update if it already exists
+        collection.replace_one({'_id': result['_id']}, result, upsert=True)
+
+
+if __name__ == "__main__":
+    load_dotenv(find_dotenv())
+    log = configure_custom_logger(module_name=__name__, logging_directory=os.getenv('LOGGING_DIRECTORY'))
+    log.info("Environment variables loaded, logger initialized.")
+
+    # Connect to MongoDB
+    log.info("Connecting to MongoDB...")
+    mongodb_client = pymongo.MongoClient(os.getenv('MONGO_CLIENT_URI'))
+
+    # Define constants
+    database_name = os.getenv('MONGO_DATABASE_NAME')
+    collection_name = os.getenv('MONGO_COLLECTION_NAME')
+    result_collection_name = os.getenv('MONGO_COLLECTION_NAME_RESULT')
+    batch_size = int(os.getenv('BATCH_SIZE'))
 
     # Query to find profiles with experiences or education data
     query = {
@@ -119,91 +172,34 @@ def load_profiles(mongo_client, mongo_collection_name, skip, limit, database):
         "education": 1
     }
 
-    # Load profiles using the query, projection, skip, and limit
-    profiles = list(collection.find(query, projection).skip(skip).limit(limit))
-    return pd.DataFrame(profiles)
-
-
-def save_results(client, mongo_collection_name, df, database):
-    """
-    Save the processed results to the MongoDB collection.
-
-    :param client: MongoDB client object
-    :param mongo_collection_name: Name of the MongoDB collection
-    :param df: DataFrame containing the processed results
-    :param database: Name of the MongoDB database
-    """
-    db = client[database]
-    collection = db[mongo_collection_name]
-    results = df.to_dict('records')
-
-    for result in results:
-        # Ensure _id is an ObjectId
-        if not isinstance(result['_id'], ObjectId):
-            result['_id'] = ObjectId(result['_id'])
-
-        # Insert the document, or update if it already exists
-        collection.replace_one({'_id': result['_id']}, result, upsert=True)
-
-    logging.info(f"Saved {len(results)} results to the database.")
-
-
-def process_batch(client, collection_name_data, collection_name_result, skip,
-                  limit, experience_prompt, education_prompt, database):
-    """
-    Process a batch of profiles from the MongoDB collection.
-
-    :param client: MongoDB client object
-    :param collection_name_data: Name of the MongoDB collection containing the profiles
-    :param collection_name_result: Name of the MongoDB collection to save the results to
-    :param skip: Number of profiles to skip
-    :param limit: Maximum number of profiles to process
-    :param experience_prompt: System prompt for experiences
-    :param education_prompt: System prompt for education
-    :param database: Name of the MongoDB database
-    """
-    df = load_profiles(client, collection_name_data, skip, limit, database)
-    logging.info(f"Loaded {len(df)} profiles (batch starting at {skip})")
-
-    df = preprocess_data(df, experience_prompt, education_prompt)
-    df = generate_attributes(df)
-    df = postprocess_data(df)
-
-    save_results(client, collection_name_result, df, database)
-    logging.info(f"Batch processed and saved (profiles {skip} to {skip + len(df) - 1})")
-
-
-# Main function
-if __name__ == "__main__":
-    load_dotenv(find_dotenv())
-    log = configure_custom_logger(module_name=__name__)
-    log.info("Environment variables loaded, logger initialized.")
-
-    # Connect to MongoDB
-    log.info("Connecting to MongoDB...")
-    mongodb_client = pymongo.MongoClient(os.getenv('MONGO_CLIENT_URI'))
-
-    # Define constants
-    collection_name = os.getenv('MONGO_COLLECTION_NAME')
-    database_name = os.getenv('MONGO_DATABASE_NAME')
-    batch_size = os.getenv('BATCH_SIZE')
-
     try:
         # Get total number of profiles
-        total_profiles = get_total_profile_count(mongodb_client, collection_name, database_name)
+        total_profiles = get_total_profile_count(mongodb_client, collection_name, database_name, query)
         log.info(f"Total profiles to process: {total_profiles}")
 
         # Process profiles in batches
         for skip in range(0, total_profiles, batch_size):
-            process_batch(
-                client=mongodb_client,
-                collection_name_data=collection_name,
-                collection_name_result=collection_name + "_processed",
-                skip=skip,
-                limit=batch_size,
-                database=database_name
-            )
+            df = load_profiles(
+                mongodb_client, collection_name, skip, batch_size, database_name,
+                query, projection)
+            log.info(f"Loaded {len(df)} profiles (batch starting at {skip})")
 
+            print(df.to_string(index=False))
+            print(df.to_string())
+
+            """
+            # Apply the preprocessing function
+            log.info("Preprocessing data...")
+            df.apply(preprocess_data())
+
+            # df = generate_attributes(df)
+            # df = postprocess_data(df)
+            """
+
+            save_results(mongodb_client, result_collection_name, df, database_name)
+            log.info(f"Batch processed and saved (profiles {skip} to {skip + len(df) - 1})")
+
+        # Log when all batches are processed
         log.info("All batches processed successfully")
 
     finally:
