@@ -5,6 +5,7 @@ torchaudio
 transformers
 pandas
 numpy
+regex
 
 # DB Requirements
 pymongo

@@ -9,8 +9,8 @@ import logging
 from dotenv import load_dotenv, find_dotenv
 from bson import ObjectId
 
+from preprocess import clean_text
 """
-from preprocess import preprocess_data
 from generate import generate_attributes
 from postprocess import postprocess_data
 """
@@ -113,10 +113,7 @@ def load_profiles(
     # Load profiles using the query, projection, skip, and limit
     profiles = list(collection.find(mongo_query, mongo_projection).skip(profiles_to_skip).limit(limit))
 
-    # Convert the results to a DataFrame
-
-
-
+    # Return the profiles as a DataFrame
     return pd.DataFrame(profiles)
 
 
@@ -160,16 +157,17 @@ if __name__ == "__main__":
     # Query to find profiles with experiences or education data
     query = {
         "$or": [
-            {"experiences": {"$exists": True, "$ne": []}},
-            {"education": {"$exists": True, "$ne": []}}
+            {"description": {"$exists": True, "$ne": []}}
         ]
     }
 
     # Projection to include only the necessary fields
     projection = {
-        "_id": 1,
-        "experiences": 1,
-        "education": 1
+        "_id": 0,
+        "original_doc_id": 1,
+        "company": 1,
+        "title": 1,
+        "description": 1,
     }
 
     try:
@@ -180,12 +178,11 @@ if __name__ == "__main__":
         # Process profiles in batches
         for skip in range(0, total_profiles, batch_size):
             df = load_profiles(
-                mongodb_client, collection_name, skip, batch_size, database_name,
-                query, projection)
+                mongodb_client, collection_name, skip, batch_size, database_name, query, projection)
             log.info(f"Loaded {len(df)} profiles (batch starting at {skip})")
 
-            print(df.to_string(index=False))
-            print(df.to_string())
+            # Clean the text in the DataFrame
+            df.applymap(clean_text)
 
             """
             # Apply the preprocessing function
@@ -196,7 +193,9 @@ if __name__ == "__main__":
             # df = postprocess_data(df)
             """
 
-            save_results(mongodb_client, result_collection_name, df, database_name)
+            print(df.to_string())
+
+            # save_results(mongodb_client, result_collection_name, df, database_name)
             log.info(f"Batch processed and saved (profiles {skip} to {skip + len(df) - 1})")
 
         # Log when all batches are processed
