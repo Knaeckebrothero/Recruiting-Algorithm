@@ -11,6 +11,8 @@ from langchain_core.callbacks.base import BaseCallbackHandler
 from langchain.schema import LLMResult
 from collections import deque
 import time
+from multiprocessing import Pool, cpu_count
+from functools import partial
 
 from custom_logger import configure_custom_logger
 from preprocess import clean_text
@@ -140,6 +142,51 @@ def save_results(client, mongo_collection_name, dataframe, database):
     """
 
 
+def process_batch(start, batch_size, total_profiles, model_name, template,
+                  mongodb_uri, database_name, collection_name, result_collection_name, query, projection):
+    log = configure_custom_logger(
+        module_name=__name__,
+        logging_directory=os.getenv('LOGGING_DIRECTORY'),
+        console_level=10
+    )
+    # Connect to MongoDB within the process
+    mongodb_client = pymongo.MongoClient(mongodb_uri)
+
+    # Create a new RateLimiter instance for this process
+    rate_limiter = RateLimiter(max_requests=70, time_window=61)
+
+    # Create a new ChatOpenAI instance for this process
+    model = ChatOpenAI(
+        model=model_name,
+        temperature=0,
+        seed=42,
+        n=1,
+    )
+
+    # Create a new DetailedCallbackHandler instance for this process
+    handler = DetailedCallbackHandler()
+
+    # Load profiles
+    df = load_profiles(
+        mongodb_client, collection_name, start, batch_size, database_name, query, projection)
+    log.info(f"Loaded {len(df)} profiles (batch starting at {start})")
+
+    # Clean the text in the DataFrame
+    df = df.map(clean_text)
+
+    # Apply the preprocessing function
+    df = apply_tag_generation_to_dataframe(df, model, template, handler, rate_limiter)
+
+    # Save the results to MongoDB
+    save_results(mongodb_client, result_collection_name, df, database_name)
+    log.info(f"Batch processed and saved (profiles {start} to {start + len(df) - 1})")
+
+    # Close MongoDB connection
+    mongodb_client.close()
+
+    return len(df)
+
+
 if __name__ == "__main__":
     load_dotenv(find_dotenv())
     log = configure_custom_logger(
@@ -158,26 +205,8 @@ if __name__ == "__main__":
     collection_name = os.getenv('MONGO_COLLECTION_NAME')
     result_collection_name = os.getenv('MONGO_COLLECTION_NAME_RESULT')
     batch_size = int(os.getenv('BATCH_SIZE'))
+    model_name = os.getenv('MODEL_NAME')
 
-    # Initialize the callback handler
-    handler = DetailedCallbackHandler()
-
-    # Initialize the rate limiter
-    rate_limiter = RateLimiter(max_requests=499, time_window=61)
-
-    # Load the model and template
-    model = ChatOpenAI(
-        model=os.getenv('MODEL_NAME'),
-        temperature=0,
-        seed=42,
-        n=1,
-    )
-
-    """
-    # Load the template from the prompts.json file
-    with open("prompts.json") as f:
-        template = json.load(f)['experiences_template']
-    """
     with open("prompt.txt", "r") as f:
         template = f.read()
 
@@ -200,27 +229,32 @@ if __name__ == "__main__":
         total_profiles = get_total_profile_count(mongodb_client, collection_name, database_name, query)
         log.info(f"Total profiles to process: {total_profiles}")
 
-        # Process profiles in batches
-        for skip in range(0, total_profiles, batch_size):
-            # Wait for the rate limiter
-            rate_limiter.wait()
+        # Determine the number of processes to use
+        # Use up to 8 processes or the number of CPU cores, whichever is smaller
+        num_processes = min(cpu_count(), 4)
+        log.info(f"Using {num_processes} processes to process profiles")
 
-            df = load_profiles(
-                mongodb_client, collection_name, skip, batch_size, database_name, query, projection)
-            log.info(f"Loaded {len(df)} profiles (batch starting at {skip})")
+        # Create a pool of worker processes
+        with Pool(num_processes) as pool:
+            # Prepare the partial function with fixed arguments
+            process_batch_partial = partial(
+                process_batch,
+                total_profiles=total_profiles,
+                model_name=model_name,
+                template=template,
+                mongodb_uri=os.getenv('MONGO_CLIENT_URI'),
+                database_name=database_name,
+                collection_name=collection_name,
+                result_collection_name=result_collection_name,
+                query=query,
+                projection=projection
+            )
 
-            # Clean the text in the DataFrame
-            df = df.map(clean_text)
-
-            # Apply the preprocessing function
-            df = apply_tag_generation_to_dataframe(df, model, template, handler, rate_limiter)
-
-            # Save the results to MongoDB
-            save_results(mongodb_client, result_collection_name, df, database_name)
-            log.info(f"Batch processed and saved (profiles {skip} to {skip + len(df) - 1})")
+            # Process profiles in parallel
+            results = pool.starmap(process_batch_partial, [(i, batch_size) for i in range(0, total_profiles, batch_size)])
 
         # Log when all batches are processed
-        log.info("All batches processed successfully")
+        log.info(f"All batches processed successfully. Total profiles processed: {sum(results)}")
 
     finally:
         # Close MongoDB connection
