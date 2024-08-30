@@ -1,5 +1,6 @@
 # Deploy model and visualizations in streamlit for better understanding
 # Goal is to analyze PDF Resume and PDF Job Requirements to predict role of candidate and generate match percentage between both
+#TO RUN: streamlit run Category_prediction.py
 
 #Import necessary libraries
 import streamlit as st
