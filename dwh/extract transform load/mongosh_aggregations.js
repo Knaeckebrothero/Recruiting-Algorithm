@@ -1,4 +1,4 @@
-# Query to get the median description lenght
+// Query to get the median description lenght
 db.KGL_LIN_PRF_USA.aggregate([
   {
     $unwind: "$experiences"
@@ -50,7 +50,7 @@ db.KGL_LIN_PRF_USA.aggregate([
   }
 ])
 
-# Query to get quantiles of the description lenght
+// Query to get quantiles of the description lenght
 db.KGL_LIN_PRF_USA.aggregate([
   {
     $unwind: "$experiences"
@@ -91,7 +91,7 @@ db.KGL_LIN_PRF_USA.aggregate([
   }
 ])
 
-# Query to get quantiles of the entire description object
+// Query to get quantiles of the entire description object
 db.KGL_LIN_PRF_USA.aggregate([
   {
     $unwind: "$experiences"

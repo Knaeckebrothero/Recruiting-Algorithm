@@ -1,4 +1,4 @@
-# Find the longest language string in the languages array for each document
+// Find the longest language string in the languages array for each document
 db.KGL_LIN_PRF.aggregate([
     // Unwind the languages array into separate documents
     { $unwind: "$languages" },
@@ -16,7 +16,7 @@ db.KGL_LIN_PRF.aggregate([
     { $project: { languages: 1, languageLength: 1 } }
 ]).toArray();
 
-# Find the longest recommendation string in the recommendations array for each document
+// Find the longest recommendation string in the recommendations array for each document
 db.KGL_LIN_PRF.aggregate([
     { $unwind: "$recommendations" },
 
@@ -29,7 +29,7 @@ db.KGL_LIN_PRF.aggregate([
     { $project: { recommendations: 1, textLength: 1 } }
 ]).toArray();
 
-# Find the longest skill string in the recommendations array for each document
+// Find the longest skill string in the recommendations array for each document
 db.KGL_LIN_PRF.aggregate([
     { $unwind: "$skills" },
 
@@ -42,7 +42,7 @@ db.KGL_LIN_PRF.aggregate([
     { $project: { skills: 1, textLength: 1 } }
 ]).toArray();
 
-# Find the longest interest string in the recommendations array for each document
+// Find the longest interest string in the recommendations array for each document
 db.KGL_LIN_PRF.aggregate([
     { $unwind: "$interests" },
 
@@ -55,7 +55,7 @@ db.KGL_LIN_PRF.aggregate([
     { $project: { interests: 1, textLength: 1 } }
 ]).toArray();
 
-# Find the longest specialities string in the recommendations array for each document
+// Find the longest specialities string in the recommendations array for each document
 db.KGL_LIN_CMP.aggregate([
     { $unwind: "$specialities" },
 
@@ -68,7 +68,7 @@ db.KGL_LIN_CMP.aggregate([
     { $project: { specialities: 1, textLength: 1 } }
 ]).toArray();
 
-# Find the longest education string in the recommendations array for each document
+// Find the longest education string in the recommendations array for each document
 db.KGL_LIN_PRF.aggregate([
     // Unwind the array to transform each element of the array into a separate document
     { $unwind: "$education" },
@@ -80,8 +80,8 @@ db.KGL_LIN_PRF.aggregate([
     { $group: { _id: null, count: { $sum: 1 } } }
 ])
 
-# Find companies with more than 2 company sizes
-{"company_size.2": { $exists: true }}
+// Find companies with more than 2 company sizes
+//{"company_size.2":{ $exists: true }}
 
-# Find companies with more than 2 locations
-{"locations.2": { $exists: true }}
+// Find companies with more than 2 locations
+//{"locations.2":{ $exists: true }}

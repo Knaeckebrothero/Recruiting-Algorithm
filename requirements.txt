@@ -5,13 +5,14 @@ torchaudio
 transformers
 pandas
 numpy
+regex
 
 # DB Requirements
 pymongo
 chromadb
 
 # NLP Requirements
-langchain
+# langchain
 # pip install flash-attn
 # pip install accelerate  # For Llama
 # pip install sentencepiece  # For Mistral Tokenizer
