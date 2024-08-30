@@ -1,4 +1,5 @@
 {
-  "experience": "This is a example placeholder for the experience prompt.",
-  "education": "This is a example placeholder for the education prompt."
+  "system": "",
+  "experiences_template": "Given the following experience from a LinkedIn profile, generate appropriate tags that describe the job, skills, and responsibilities. \r\n            For each tag, provide a brief description and a confidence score.\r\n\r\n            Experience:\r\n            Company: {company}\r\n            Title: {title}\r\n            Description: {description}\r\n\r\n            Generate tags in the following format:\r\n            {format_instructions}\r\n\r\n            Ensure that:\r\n            1. Each tag is relevant and specific to the given experience.\r\n            2. The description clearly explains what the tag represents in the context of this experience.\r\n            3. The confidence score reflects how certain you are that this tag applies to the experience (1.0 being absolutely certain, 0.0 being not at all certain).\r\n            4. You generate at least 3 tags, but no more than 10 tags.\r\n\r\n            Generate the tags now:",
+  "education": ""
 }

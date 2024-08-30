@@ -3,16 +3,15 @@ This script holds the main function for the tagging pipeline.
 """
 import os
 import pymongo
+import json
 import pandas as pd
 from dotenv import load_dotenv, find_dotenv
 from bson import ObjectId
+from langchain_openai import ChatOpenAI
 
 from custom_logger import configure_custom_logger
 from preprocess import clean_text
-"""
-from generate import generate_attributes
-from postprocess import postprocess_data
-"""
+from process.generate import apply_tag_generation_to_dataframe
 
 
 def get_total_profile_count(mongo_client, mongo_collection_name, database, mongo_query=None):
@@ -76,10 +75,8 @@ def save_results(client, mongo_collection_name, dataframe, database):
     :param dataframe: DataFrame containing the processed results
     :param database: Name of the MongoDB database
     """
-    db = client[database]
-    collection = db[mongo_collection_name]
-    results = dataframe.to_dict('records')
-
+    client[database][mongo_collection_name].insert_many(dataframe.to_dict('records'))
+    """
     for result in results:
         # Ensure _id is an ObjectId
         if not isinstance(result['_id'], ObjectId):
@@ -87,6 +84,7 @@ def save_results(client, mongo_collection_name, dataframe, database):
 
         # Insert the document, or update if it already exists
         collection.replace_one({'_id': result['_id']}, result, upsert=True)
+    """
 
 
 if __name__ == "__main__":
@@ -103,6 +101,14 @@ if __name__ == "__main__":
     collection_name = os.getenv('MONGO_COLLECTION_NAME')
     result_collection_name = os.getenv('MONGO_COLLECTION_NAME_RESULT')
     batch_size = int(os.getenv('BATCH_SIZE'))
+
+    # Load the model and template
+    model = ChatOpenAI(model=os.getenv('MODEL_NAME'), temperature=0)
+
+    # Load the template from the prompts.json file
+    with open("prompts.json") as f:
+        template = json.load(f)['experiences_template']
+        f.close()
 
     # Query to find profiles with experiences or education data
     query = {
@@ -132,20 +138,13 @@ if __name__ == "__main__":
             log.info(f"Loaded {len(df)} profiles (batch starting at {skip})")
 
             # Clean the text in the DataFrame
-            df.applymap(clean_text)
+            df = df.map(clean_text)
 
-            """
             # Apply the preprocessing function
-            log.info("Preprocessing data...")
-            df.apply(preprocess_data())
+            df = apply_tag_generation_to_dataframe(df, model, template)
 
-            # df = generate_attributes(df)
-            # df = postprocess_data(df)
-            """
-
-            print(df.to_string())
-
-            # save_results(mongodb_client, result_collection_name, df, database_name)
+            # Save the results to MongoDB
+            save_results(mongodb_client, result_collection_name, df, database_name)
             log.info(f"Batch processed and saved (profiles {skip} to {skip + len(df) - 1})")
 
         # Log when all batches are processed

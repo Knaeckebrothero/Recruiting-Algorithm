@@ -15,8 +15,8 @@ def clean_text(text: str) -> str | None:
     :return: Cleaned text
     """
     if isinstance(text, str):
-        # Normalize all types of line breaks to a single newline character
-        text = regex.sub(r'\r\n|\r|\n', '\n', text)
+        # Normalize all types of line breaks to a single space
+        text = regex.sub(r'\r\n|\r|\n', ' ', text)
 
         # Removes symbols and pictographs while keeping letters, numbers, and common punctuation
         text = regex.sub(r'[\p{So}\p{C}]+', '', text, flags=regex.UNICODE)
