@@ -8,10 +8,39 @@ import pandas as pd
 from dotenv import load_dotenv, find_dotenv
 from bson import ObjectId
 from langchain_openai import ChatOpenAI
+from langchain_core.callbacks.base import BaseCallbackHandler
+from langchain.schema import LLMResult
 
 from custom_logger import configure_custom_logger
 from preprocess import clean_text
 from process.generate import apply_tag_generation_to_dataframe
+
+
+class DetailedCallbackHandler(BaseCallbackHandler):
+    def __init__(self):
+        self.request_data = {}
+        self.response_data = {}
+
+    def on_llm_start(self, serialized: dict[str, any], prompts: list[str], **kwargs: any) -> None:
+        self.request_data = {
+            "model": serialized.get("name"),
+            "prompts": prompts,
+            "invocation_params": serialized.get("invocation_params", {})
+        }
+
+    def on_llm_end(self, response: LLMResult, **kwargs: any) -> None:
+        self.response_data = {
+            "generations": [
+                [
+                    {
+                        "text": gen.text,
+                        "generation_info": gen.generation_info,
+                        "type": gen.type
+                    } for gen in gens
+                ] for gens in response.generations
+            ],
+            "llm_output": response.llm_output
+        }
 
 
 def get_total_profile_count(mongo_client, mongo_collection_name, database, mongo_query=None):
@@ -102,8 +131,16 @@ if __name__ == "__main__":
     result_collection_name = os.getenv('MONGO_COLLECTION_NAME_RESULT')
     batch_size = int(os.getenv('BATCH_SIZE'))
 
+    # Initialize the callback handler
+    handler = DetailedCallbackHandler()
+
     # Load the model and template
-    model = ChatOpenAI(model=os.getenv('MODEL_NAME'), temperature=0)
+    model = ChatOpenAI(
+        model=os.getenv('MODEL_NAME'),
+        temperature=0,
+        seed=42,
+        n=1,
+    )
 
     # Load the template from the prompts.json file
     with open("prompts.json") as f:
@@ -141,7 +178,7 @@ if __name__ == "__main__":
             df = df.map(clean_text)
 
             # Apply the preprocessing function
-            df = apply_tag_generation_to_dataframe(df, model, template)
+            df = apply_tag_generation_to_dataframe(df, model, template, handler)
 
             # Save the results to MongoDB
             save_results(mongodb_client, result_collection_name, df, database_name)
